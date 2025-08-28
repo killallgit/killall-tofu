@@ -1,0 +1,12 @@
+{
+  "name": "killall-tofu",
+  "version": "1.0.0",
+  "description": "> Automatic Terraform infrastructure destruction with a friendly menu bar interface",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
