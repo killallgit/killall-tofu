@@ -116,7 +116,14 @@ describe('validatePath', () => {
 });
 
 describe('validateConfig', () => {
-  const testProjectPath = '/home/user/test-project';
+  let testProjectPath: string;
+  
+  beforeEach(async () => {
+    // Create temp directory for testing
+    const randomId = Math.random().toString(36).substring(2, 15);
+    testProjectPath = path.join(os.tmpdir(), `validate-test-${randomId}`);
+    await fs.mkdir(testProjectPath, { recursive: true });
+  });
 
   it('should validate minimal valid configuration', async () => {
     const config = {
@@ -140,8 +147,8 @@ describe('validateConfig', () => {
       command: 'terraform destroy -auto-approve',
       tags: ['test', 'development'],
       execution: {
-        working_directory: '.',
-        environment_variables: {
+        workingDirectory: '.',
+        environment: {
           TF_VAR_env: 'test',
           AWS_REGION: 'us-west-2',
         },

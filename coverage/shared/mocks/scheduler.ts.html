@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">8.88% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/135</span>
+                <span class='fraction'>12/135</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">6.2% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/129</span>
+                <span class='fraction'>8/129</span>
             </div>
         
             
@@ -407,21 +407,23 @@
 <a name='L342'></a><a href='#L342'>342</a>
 <a name='L343'></a><a href='#L343'>343</a>
 <a name='L344'></a><a href='#L344'>344</a>
-<a name='L345'></a><a href='#L345'>345</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L345'></a><a href='#L345'>345</a>
+<a name='L346'></a><a href='#L346'>346</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -659,11 +661,11 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -671,16 +673,16 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -688,7 +690,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -755,17 +757,18 @@
  * Mock scheduler service implementation for testing and parallel development.
  */
 &nbsp;
+import { EventEmitter } from 'events';
+&nbsp;
 import { SchedulerService, Project, Result } from '../types';
-<span class="cstat-no" title="statement not covered" >import { Ok, Err } from '../utils/result';</span>
-<span class="cstat-no" title="statement not covered" >import { EventEmitter } from 'events';</span>
+import { Ok, Err } from '../utils/result';
 &nbsp;
 interface ScheduledTask {
   project: Project;
   scheduledFor: Date;
-  timeoutId?: NodeJS.Timeout;
+  timeoutId?: ReturnType&lt;typeof setTimeout&gt;;
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class M</span>ockScheduler extends EventEmitter implements SchedulerService {
+export class MockScheduler extends EventEmitter implements SchedulerService {
   private <span class="cstat-no" title="statement not covered" >isRunning = false;</span>
   private <span class="cstat-no" title="statement not covered" >scheduledTasks = new Map&lt;string, ScheduledTask&gt;();</span>
   private config: {
@@ -1003,11 +1006,11 @@ interface ScheduledTask {
 }
 &nbsp;
 // Factory functions with different configurations
-export const <span class="cstat-no" title="statement not covered" >createMockScheduler = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): MockScheduler =</span>&gt; {</span>
+export const createMockScheduler = <span class="fstat-no" title="function not covered" >(): MockScheduler =</span>&gt; {
 <span class="cstat-no" title="statement not covered" >  return new MockScheduler();</span>
 };
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >createReliableScheduler = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): MockScheduler =</span>&gt; {</span>
+export const createReliableScheduler = <span class="fstat-no" title="function not covered" >(): MockScheduler =</span>&gt; {
 <span class="cstat-no" title="statement not covered" >  return new MockScheduler({</span>
     maxConcurrentJobs: 10,
     processingDelay: 50,
@@ -1015,7 +1018,7 @@ export const <span class="cstat-no" title="statement not covered" >createReliabl
   });
 };
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >createUnreliableScheduler = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): MockScheduler =</span>&gt; {</span>
+export const createUnreliableScheduler = <span class="fstat-no" title="function not covered" >(): MockScheduler =</span>&gt; {
 <span class="cstat-no" title="statement not covered" >  return new MockScheduler({</span>
     maxConcurrentJobs: 3,
     processingDelay: 200,
@@ -1023,7 +1026,7 @@ export const <span class="cstat-no" title="statement not covered" >createUnrelia
   });
 };
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >createSlowScheduler = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>): MockScheduler =</span>&gt; {</span>
+export const createSlowScheduler = <span class="fstat-no" title="function not covered" >(): MockScheduler =</span>&gt; {
 <span class="cstat-no" title="statement not covered" >  return new MockScheduler({</span>
     maxConcurrentJobs: 2,
     processingDelay: 1000,
@@ -1032,7 +1035,7 @@ export const <span class="cstat-no" title="statement not covered" >createSlowSch
 };
 &nbsp;
 // Test scenario helpers
-export const <span class="cstat-no" title="statement not covered" >TEST_SCENARIOS = {</span>
+export const TEST_SCENARIOS = {
   // Schedule a single project
   singleSchedule: <span class="fstat-no" title="function not covered" >async </span>(scheduler: MockScheduler, project: Project) =&gt; {
 <span class="cstat-no" title="statement not covered" >    await scheduler.start();</span>
@@ -1102,7 +1105,7 @@ export const <span class="cstat-no" title="statement not covered" >TEST_SCENARIO
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-28T15:39:41.433Z
+                at 2025-08-28T20:04:38.544Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

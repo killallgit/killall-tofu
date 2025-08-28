@@ -23,9 +23,9 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">11.76% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/102</span>
+                <span class='fraction'>12/102</span>
             </div>
         
             
@@ -44,9 +44,9 @@
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">9.78% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/92</span>
+                <span class='fraction'>9/92</span>
             </div>
         
             
@@ -349,14 +349,14 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -425,7 +425,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -491,7 +491,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -526,7 +526,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -543,7 +543,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -558,7 +558,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -567,7 +567,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">1x</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -621,13 +621,13 @@ import {
   ExecutionStatus,
   Result 
 } from '../types';
-<span class="cstat-no" title="statement not covered" >import { Ok, Err } from '../utils/result';</span>
+import { Ok, Err } from '../utils/result';
 // Generate deterministic UUIDs for testing
-const generateId = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(): string =</span>&gt; {</span>
+const generateId = <span class="fstat-no" title="function not covered" >(): string =</span>&gt; {
 <span class="cstat-no" title="statement not covered" >  return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);</span>
 };
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export class M</span></span>ockProjectRepository implements ProjectRepository {
+<span class="fstat-no" title="function not covered" >export class M</span>ockProjectRepository implements ProjectRepository {
   private <span class="cstat-no" title="statement not covered" >projects = new Map&lt;string, Project&gt;();</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>create(project: Project): Promise&lt;Result&lt;Project&gt;&gt; {
@@ -697,7 +697,7 @@ const generateId = <span class="cstat-no" title="statement not covered" ><span c
   }
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export class M</span></span>ockExecutionRepository implements ExecutionRepository {
+<span class="fstat-no" title="function not covered" >export class M</span>ockExecutionRepository implements ExecutionRepository {
   private <span class="cstat-no" title="statement not covered" >executions = new Map&lt;string, Execution&gt;();</span>
 &nbsp;
 <span class="fstat-no" title="function not covered" >  async </span>create(execution: Execution): Promise&lt;Result&lt;Execution&gt;&gt; {
@@ -763,7 +763,7 @@ const generateId = <span class="cstat-no" title="statement not covered" ><span c
   }
 }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >export class M</span>ockDatabase implements DatabaseService {
+export class MockDatabase implements DatabaseService {
   public projects: MockProjectRepository;
   public executions: MockExecutionRepository;
 &nbsp;
@@ -798,7 +798,7 @@ const generateId = <span class="cstat-no" title="statement not covered" ><span c
 }
 &nbsp;
 // Factory function for creating configured mock database
-export const <span class="cstat-no" title="statement not covered" >createMockDatabase = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>o</span>ptions?: {</span>
+export const createMockDatabase = <span class="fstat-no" title="function not covered" >(o</span>ptions?: {
   projects?: Project[];
   executions?: Execution[];
 }): MockDatabase =&gt; {
@@ -815,7 +815,7 @@ export const <span class="cstat-no" title="statement not covered" >createMockDat
 };
 &nbsp;
 // Predefined test data generators
-export const <span class="cstat-no" title="statement not covered" >createTestProject = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>o</span>verrides: Partial&lt;Project&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Project =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+export const createTestProject = <span class="fstat-no" title="function not covered" >(o</span>verrides: Partial&lt;Project&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Project =&gt; (<span class="cstat-no" title="statement not covered" >{</span>
   id: generateId(),
   path: '/test/project',
   config: {
@@ -830,7 +830,7 @@ export const <span class="cstat-no" title="statement not covered" >createTestPro
   ...overrides,
 });
 &nbsp;
-export const <span class="cstat-no" title="statement not covered" >createTestExecution = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(</span>o</span>verrides: Partial&lt;Execution&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Execution =&gt; (<span class="cstat-no" title="statement not covered" >{</span></span>
+export const createTestExecution = <span class="fstat-no" title="function not covered" >(o</span>verrides: Partial&lt;Execution&gt; = <span class="branch-0 cbranch-no" title="branch not covered" >{})</span>: Execution =&gt; (<span class="cstat-no" title="statement not covered" >{</span>
   id: generateId(),
   projectId: generateId(),
   startedAt: new Date(),
@@ -839,7 +839,7 @@ export const <span class="cstat-no" title="statement not covered" >createTestExe
 });
 &nbsp;
 // Test scenarios
-export const <span class="cstat-no" title="statement not covered" >TEST_SCENARIOS = {</span>
+export const TEST_SCENARIOS = {
   emptyDatabase: <span class="fstat-no" title="function not covered" >() =</span>&gt; <span class="cstat-no" title="statement not covered" >new MockDatabase(),</span>
   
   withSampleProjects: <span class="fstat-no" title="function not covered" >() =</span>&gt; {
@@ -886,7 +886,7 @@ export const <span class="cstat-no" title="statement not covered" >TEST_SCENARIO
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-08-28T15:39:41.406Z
+                at 2025-08-28T20:04:38.507Z
             </div>
         <script src="../../prettify.js"></script>
         <script>
