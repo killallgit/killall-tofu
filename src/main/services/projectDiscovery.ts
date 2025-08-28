@@ -1,10 +1,12 @@
 // Project discovery service orchestrates scanning for .killall.yaml files
 // Handles duplicate detection, lifecycle management, and performance optimization
 
-import { Result, Project, ProjectRepository, EventRepository, EventType } from '../database/types';
-import { parseConfigFile, parseDuration } from './configValidator';
 import * as path from 'path';
 import * as fs from 'fs/promises';
+
+import { Result, Project, ProjectRepository, EventRepository, EventType } from '../database/types';
+
+import { parseConfigFile, parseDuration } from './configValidator';
 
 export interface DiscoveryOptions {
   /** Root directories to scan for projects */

@@ -3,7 +3,7 @@
  */
 
 import { Project, Execution, ProjectConfig, NotificationMessage } from '../shared/types';
-import { Result, Ok, Err } from '../shared/utils/result';
+import { Result } from '../shared/utils/result';
 
 // Test data generators
 export const createTestId = (): string => {
@@ -126,10 +126,10 @@ export const expectEventually = async (
 };
 
 // Mock helpers
-export const createMockFunction = <T extends (...args: any[]) => any>(
+export const createMockFunction = <T extends (..._args: any[]) => any>(
   implementation?: T
 ): jest.MockedFunction<T> => {
-  return jest.fn(implementation) as jest.MockedFunction<T>;
+  return jest.fn(implementation) as unknown as jest.MockedFunction<T>;
 };
 
 export const createSpyObject = <T extends Record<string, any>>(
@@ -158,7 +158,7 @@ export const advanceTime = async (ms: number): Promise<void> => {
 // Array testing helpers
 export const expectArrayToContain = <T>(
   array: T[],
-  predicate: (item: T) => boolean,
+  predicate: (_item: T) => boolean,
   message?: string
 ): void => {
   const found = array.some(predicate);
@@ -185,7 +185,7 @@ export const expectToThrow = async (
     await fn();
     throw new Error('Expected function to throw');
   } catch (error) {
-    if (expectedError) {
+    if (expectedError && error instanceof Error) {
       if (typeof expectedError === 'string') {
         expect(error.message).toContain(expectedError);
       } else {
@@ -199,7 +199,8 @@ export const expectNotToThrow = async (fn: () => Promise<any> | any): Promise<an
   try {
     return await fn();
   } catch (error) {
-    throw new Error(`Expected function not to throw, but it threw: ${error.message}`);
+    const message = error instanceof Error ? error.message : String(error);
+    throw new Error(`Expected function not to throw, but it threw: ${message}`);
   }
 };
 

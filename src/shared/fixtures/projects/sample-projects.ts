@@ -168,9 +168,8 @@ export const SAMPLE_PROJECTS: Record<string, Project> = {
     status: 'destroying',
   }),
   k8sProject: createProjectWithConfig('kubernetes', {
-    status: 'discovered',
-    tags: ['kubernetes', 'staging'],
-  }),
+    status: 'discovered' as const,
+  } as Partial<Project>),
   nodejsProject: createProjectWithConfig('nodejs', {
     status: 'failed',
     metadata: {

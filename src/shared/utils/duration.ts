@@ -4,6 +4,7 @@
  */
 
 import { Result } from '../types';
+
 import { Ok, Err } from './result';
 
 // Time unit definitions in milliseconds
@@ -112,6 +113,11 @@ export const parseDuration = (input: string): Result<Duration, Error> => {
   if (/^\d+$/.test(trimmed)) {
     const ms = parseInt(trimmed, 10);
     return Ok(new DurationImpl(ms));
+  }
+
+  // Check for negative signs (should be rejected)
+  if (trimmed.includes('-')) {
+    return Err(new Error('Negative durations are not allowed'));
   }
 
   // Parse complex duration expressions

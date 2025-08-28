@@ -3,6 +3,10 @@
  */
 
 import { Result, ValidationError, ProjectConfig, ExecutionConfig, HookConfig } from '../types';
+
+// Re-export type and constructor for convenience
+export { ValidationError } from '../types';
+
 import { Ok, Err } from './result';
 import { parseDuration } from './duration';
 import { validatePath } from './paths';
@@ -188,7 +192,7 @@ export const validateProjectConfig = (config: unknown): Result<ProjectConfig, Va
     required('version'),
     isNumber('version'),
     oneOf([1], 'version')
-  )(obj.version);
+  )(obj.version as any);
   if (!versionCheck.ok) return versionCheck;
 
   // Validate timeout
@@ -196,7 +200,7 @@ export const validateProjectConfig = (config: unknown): Result<ProjectConfig, Va
     required('timeout'),
     isString('timeout'),
     isDuration('timeout')
-  )(obj.timeout);
+  )(obj.timeout as any);
   if (!timeoutCheck.ok) return timeoutCheck;
 
   // Validate optional fields
@@ -204,12 +208,12 @@ export const validateProjectConfig = (config: unknown): Result<ProjectConfig, Va
     const commandCheck = combine(
       isString('command'),
       minLength(1, 'command')
-    )(obj.command);
+    )(obj.command as any);
     if (!commandCheck.ok) return commandCheck;
   }
 
   if (obj.name != null) {
-    const nameCheck = isValidProjectName('name')(obj.name);
+    const nameCheck = isValidProjectName('name')(obj.name as any);
     if (!nameCheck.ok) return nameCheck;
   }
 
@@ -217,7 +221,7 @@ export const validateProjectConfig = (config: unknown): Result<ProjectConfig, Va
     const tagsCheck = combine(
       isArray('tags'),
       validateArray(isValidTag('tag'), 'tags')
-    )(obj.tags);
+    )(obj.tags as any);
     if (!tagsCheck.ok) return tagsCheck;
   }
 
@@ -253,7 +257,7 @@ export const validateExecutionConfig = (config: unknown): Result<ExecutionConfig
       isNumber('retries'),
       minValue(0, 'retries'),
       maxValue(10, 'retries')
-    )(obj.retries);
+    )(obj.retries as any);
     if (!retriesCheck.ok) return retriesCheck;
   }
 
@@ -271,7 +275,7 @@ export const validateExecutionConfig = (config: unknown): Result<ExecutionConfig
   }
 
   if (obj.workingDirectory != null) {
-    const workDirCheck = isValidPath('workingDirectory')(obj.workingDirectory);
+    const workDirCheck = isValidPath('workingDirectory')(obj.workingDirectory as any);
     if (!workDirCheck.ok) return workDirCheck;
   }
 
@@ -279,7 +283,7 @@ export const validateExecutionConfig = (config: unknown): Result<ExecutionConfig
     const shellCheck = combine(
       isString('shell'),
       minLength(1, 'shell')
-    )(obj.shell);
+    )(obj.shell as any);
     if (!shellCheck.ok) return shellCheck;
   }
 
@@ -302,17 +306,17 @@ export const validateHookConfig = (config: unknown): Result<HookConfig, Validati
   );
 
   if (obj.beforeDestroy != null) {
-    const beforeCheck = combine(isArray('beforeDestroy'), hookArrayValidator)(obj.beforeDestroy);
+    const beforeCheck = combine(isArray('beforeDestroy'), hookArrayValidator)(obj.beforeDestroy as any);
     if (!beforeCheck.ok) return beforeCheck;
   }
 
   if (obj.afterDestroy != null) {
-    const afterCheck = combine(isArray('afterDestroy'), hookArrayValidator)(obj.afterDestroy);
+    const afterCheck = combine(isArray('afterDestroy'), hookArrayValidator)(obj.afterDestroy as any);
     if (!afterCheck.ok) return afterCheck;
   }
 
   if (obj.onFailure != null) {
-    const failureCheck = combine(isArray('onFailure'), hookArrayValidator)(obj.onFailure);
+    const failureCheck = combine(isArray('onFailure'), hookArrayValidator)(obj.onFailure as any);
     if (!failureCheck.ok) return failureCheck;
   }
 

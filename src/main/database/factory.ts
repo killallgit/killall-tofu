@@ -1,6 +1,8 @@
 import { Result } from '../../shared/types';
-import { DatabaseService } from './index';
+
 import { createConnection as createDrizzleConnection, DrizzleConnection } from './drizzle/connection';
+
+import { DatabaseService } from './index';
 
 export interface DatabaseFactory {
   readonly createDatabase: () => Result<DatabaseService | DrizzleConnection>;

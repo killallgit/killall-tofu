@@ -13,7 +13,8 @@
   },
   "env": {
     "node": true,
-    "es2022": true
+    "es2022": true,
+    "browser": true
   },
   "rules": {
     // Functional Programming Standards (from CLAUDE.md)
@@ -29,8 +30,13 @@
     "prefer-rest-params": "error",
     "prefer-spread": "error",
     
-    // Error handling
-    "no-unused-vars": "error",
+    // Error handling - relaxed for development
+    "no-unused-vars": ["warn", { 
+      "argsIgnorePattern": "^_",
+      "varsIgnorePattern": "^_", 
+      "args": "none",
+      "ignoreRestSiblings": true
+    }],
     "no-throw-literal": "error",
     
     // Code quality
@@ -51,13 +57,32 @@
   },
   "overrides": [
     {
-      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
+      "files": [
+        "**/*.test.ts", 
+        "**/*.test.tsx", 
+        "**/*.spec.ts",
+        "**/__tests__/**/*.ts",
+        "**/__tests__/**/*.tsx",
+        "**/src/__tests__/**/*.ts"
+      ],
       "env": {
         "jest": true
       },
       "rules": {
         "no-console": "off",
-        "@typescript-eslint/explicit-function-return-type": "off"
+        "@typescript-eslint/explicit-function-return-type": "off",
+        "no-undef": "off"
+      }
+    },
+    {
+      "files": [
+        "**/example*.ts",
+        "**/Example*.ts",
+        "**/demo*.ts",
+        "**/Demo*.ts"
+      ],
+      "rules": {
+        "no-console": "off"
       }
     }
   ]

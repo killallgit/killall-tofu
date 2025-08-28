@@ -1,11 +1,14 @@
 // File watching service for monitoring .killall.yaml files and project changes
 // Uses chokidar for efficient file system monitoring with debouncing and error recovery
 
-import * as chokidar from 'chokidar';
-import { Result, Database, Project } from '../database/types';
-import { ProjectDiscoveryService, ProjectDiscoveryEvent, DiscoveryOptions } from './projectDiscovery';
 import { EventEmitter } from 'events';
 import * as path from 'path';
+
+import * as chokidar from 'chokidar';
+
+import { Result, Database, Project } from '../database/types';
+
+import { ProjectDiscoveryService, ProjectDiscoveryEvent, DiscoveryOptions } from './projectDiscovery';
 
 export interface FileWatcherOptions {
   /** Directories to watch for .killall.yaml files */
@@ -44,7 +47,7 @@ export class FileWatcherService extends EventEmitter {
   private watcher: chokidar.FSWatcher | null = null;
   private projectDiscovery: ProjectDiscoveryService;
   private watchedPaths: string[] = [];
-  private debounceTimers: Map<string, NodeJS.Timeout> = new Map();
+  private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
   private stats: FileWatcherStats = {
     watchedPaths: [],
     watchedFiles: 0,
@@ -117,7 +120,7 @@ export class FileWatcherService extends EventEmitter {
       ];
 
       // Configure chokidar options
-      const chokidarOptions: chokidar.WatchOptions = {
+      const chokidarOptions = {
         ignoreInitial,
         persistent: true,
         depth: maxDepth,
@@ -275,7 +278,7 @@ export class FileWatcherService extends EventEmitter {
         
         this.emit('ready');
       })
-      .on('error', (error: Error) => {
+      .on('error', (error: unknown) => {
         this.stats.errors++;
         this.emit('error', error);
       });
@@ -309,7 +312,7 @@ export class FileWatcherService extends EventEmitter {
 
       switch (event) {
         case 'add':
-        case 'change':
+        case 'change': {
           // Config file added or changed - discover/update project
           const result = await this.projectDiscovery.discoverProject(projectPath);
           if (result.ok && result.value) {
@@ -320,8 +323,9 @@ export class FileWatcherService extends EventEmitter {
             this.emit('error', result.error);
           }
           break;
+        }
 
-        case 'unlink':
+        case 'unlink': {
           // Config file removed - clean up project
           const findResult = await this.database.projects.findByPath(projectPath);
           if (findResult.ok && findResult.value) {
@@ -349,6 +353,7 @@ export class FileWatcherService extends EventEmitter {
             }
           }
           break;
+        }
       }
     } catch (error) {
       this.stats.errors++;

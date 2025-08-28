@@ -154,7 +154,7 @@ describe('Validation utilities', () => {
       expect(isOk(validator('hello'))).toBe(true);
       expect(isErr(validator('hi'))).toBe(true); // Too short
       expect(isErr(validator('verylongstring'))).toBe(true); // Too long
-      expect(isErr(validator(123))).toBe(true); // Not a string
+      expect(isErr(validator(123 as any))).toBe(true); // Not a string
     });
 
     it('should make validators optional', () => {
@@ -167,7 +167,7 @@ describe('Validation utilities', () => {
       expect(isOk(validator(null))).toBe(true);
       expect(isOk(validator(undefined))).toBe(true);
       expect(isErr(validator('hi'))).toBe(true); // Too short
-      expect(isErr(validator(123))).toBe(true); // Not a string
+      expect(isErr(validator(123 as any))).toBe(true); // Not a string
     });
 
     it('should validate arrays with item validators', () => {
@@ -178,7 +178,7 @@ describe('Validation utilities', () => {
 
       expect(isOk(validator(['hello', 'world']))).toBe(true);
       expect(isErr(validator(['hello', 'a']))).toBe(true); // 'a' too short
-      expect(isErr(validator(['hello', 123]))).toBe(true); // 123 not string
+      expect(isErr(validator(['hello', 123 as any]))).toBe(true); // 123 not string
     });
   });
 

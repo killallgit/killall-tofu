@@ -1,11 +1,12 @@
 // File watcher service tests
 // Tests file system monitoring, debouncing, and integration with project discovery
 
-import { FileWatcherService, FileWatcherOptions } from '../fileWatcher';
-import { Database, Project, ProjectRepository, EventRepository, ExecutionRepository } from '../../database/types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
+
+import { Database, Project, ProjectRepository, EventRepository, ExecutionRepository } from '../../database/types';
+import { FileWatcherService, FileWatcherOptions } from '../fileWatcher';
 
 // Mock database and repositories (reusing from projectDiscovery.test.ts)
 class MockProjectRepository implements ProjectRepository {
@@ -200,7 +201,9 @@ describe('FileWatcherService', () => {
       const result = await fileWatcher.start(options);
 
       expect(result.ok).toBe(false);
-      expect(result.error?.message).toContain('At least one watch path must be specified');
+      if (!result.ok) {
+        expect(result.error?.message).toContain('At least one watch path must be specified');
+      }
     });
 
     it('should restart when already running', async () => {
@@ -388,7 +391,9 @@ name: "Manual Scan Project"
       const result = await fileWatcher.scan();
 
       expect(result.ok).toBe(false);
-      expect(result.error?.message).toContain('File watcher is not running');
+      if (!result.ok) {
+        expect(result.error?.message).toContain('File watcher is not running');
+      }
     });
   });
 

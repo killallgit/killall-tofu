@@ -2,15 +2,16 @@
  * Mock file watcher service implementation for testing and parallel development.
  */
 
+import { EventEmitter } from 'events';
+
 import { FileWatcherService, Result } from '../types';
 import { Ok, Err } from '../utils/result';
-import { EventEmitter } from 'events';
 
 export class MockFileWatcher extends EventEmitter implements FileWatcherService {
   private isWatching = false;
   private watchedPaths: string[] = [];
-  private discoveredCallback?: (path: string) => void;
-  private removedCallback?: (path: string) => void;
+  private discoveredCallback?: (_path: string) => void;
+  private removedCallback?: (_path: string) => void;
 
   async watch(paths: string[]): Promise<Result<void>> {
     if (this.isWatching) {
@@ -40,11 +41,11 @@ export class MockFileWatcher extends EventEmitter implements FileWatcherService 
     return Ok(void 0);
   }
 
-  onProjectDiscovered(callback: (path: string) => void): void {
+  onProjectDiscovered(callback: (_path: string) => void): void {
     this.discoveredCallback = callback;
   }
 
-  onProjectRemoved(callback: (path: string) => void): void {
+  onProjectRemoved(callback: (_path: string) => void): void {
     this.removedCallback = callback;
   }
 
