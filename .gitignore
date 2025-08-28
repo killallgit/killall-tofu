@@ -1,0 +1,3 @@
+# Keep .github directory and its contents
+!.github/
+!.github/**
