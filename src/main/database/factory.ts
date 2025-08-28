@@ -1,4 +1,4 @@
-import { Result } from '../../shared/utils/result';
+import { Result } from '../../shared/types';
 import { DatabaseService } from './index';
 import { createConnection as createDrizzleConnection, DrizzleConnection } from './drizzle/connection';
 
@@ -43,12 +43,8 @@ export const createDatabaseFactory = (
     // Use existing DatabaseService for backward compatibility
     try {
       const database = new DatabaseService(databasePath);
-      const initResult = database.initialize();
-      
-      if (!initResult.ok) {
-        return initResult as Result<never>;
-      }
-      
+      // Note: DatabaseService requires async connect(), but we return synchronously
+      // The connection will need to be established separately
       return { ok: true, value: database };
     } catch (error) {
       return {
@@ -99,10 +95,12 @@ export const isDatabaseService = (
   // Check for DatabaseService-specific methods and properties
   const possibleService = db as any;
   return (
-    typeof possibleService.initialize === 'function' &&
+    typeof possibleService.connect === 'function' &&
     typeof possibleService.close === 'function' &&
-    typeof possibleService.healthCheck === 'function' &&
-    typeof possibleService.getStats === 'function' &&
+    typeof possibleService.runMigrations === 'function' &&
+    possibleService.projects !== undefined &&
+    possibleService.executions !== undefined &&
+    possibleService.events !== undefined &&
     !possibleService._ // Ensure it's not Drizzle (which has _ property)
   );
 };
