@@ -1,0 +1,532 @@
+// Project discovery service orchestrates scanning for .killall.yaml files
+// Handles duplicate detection, lifecycle management, and performance optimization
+
+import { Result, Project, ProjectRepository, EventRepository, EventType } from '../database/types';
+import { parseConfigFile, parseDuration } from './configValidator';
+import * as path from 'path';
+import * as fs from 'fs/promises';
+
+export interface DiscoveryOptions {
+  /** Root directories to scan for projects */
+  scanPaths: string[];
+  /** Maximum depth to scan (default: 10) */
+  maxDepth?: number;
+  /** Exclude patterns (default: node_modules, .git, etc.) */
+  excludePatterns?: string[];
+  /** Performance: batch size for database operations */
+  batchSize?: number;
+}
+
+export interface DiscoveryStats {
+  scannedDirectories: number;
+  foundProjects: number;
+  newProjects: number;
+  updatedProjects: number;
+  errors: number;
+  duration: number;
+}
+
+export interface ProjectDiscoveryEvent {
+  type: 'discovered' | 'updated' | 'removed' | 'error';
+  project?: Project;
+  path?: string;
+  error?: Error;
+}
+
+// Default exclusion patterns for performance
+const DEFAULT_EXCLUDE_PATTERNS = [
+  'node_modules',
+  '.git',
+  '.svn',
+  '.hg',
+  'vendor',
+  'target',
+  'dist',
+  'build',
+  '.next',
+  '.webpack',
+  'coverage',
+  '.terraform',
+  '*.egg-info',
+  '__pycache__',
+  '.pytest_cache',
+  '.vscode',
+  '.idea',
+];
+
+/**
+ * Project Discovery Service
+ * Orchestrates the scanning and registration of projects with .killall.yaml files
+ */
+export class ProjectDiscoveryService {
+  private eventListeners: ((event: ProjectDiscoveryEvent) => void)[] = [];
+
+  constructor(
+    private projectRepository: ProjectRepository,
+    private eventRepository: EventRepository
+  ) {}
+
+  /**
+   * Register event listener for discovery events
+   */
+  public on(listener: (event: ProjectDiscoveryEvent) => void): void {
+    this.eventListeners.push(listener);
+  }
+
+  /**
+   * Remove event listener
+   */
+  public off(listener: (event: ProjectDiscoveryEvent) => void): void {
+    const index = this.eventListeners.indexOf(listener);
+    if (index >= 0) {
+      this.eventListeners.splice(index, 1);
+    }
+  }
+
+  /**
+   * Emit discovery event to all listeners
+   */
+  private emit(event: ProjectDiscoveryEvent): void {
+    this.eventListeners.forEach(listener => {
+      try {
+        listener(event);
+      } catch (error) {
+        // Don't let listener errors crash the discovery process
+        console.error('Error in discovery event listener:', error);
+      }
+    });
+  }
+
+  /**
+   * Scan specified directories for .killall.yaml files and register projects
+   */
+  public async discover(options: DiscoveryOptions): Promise<Result<DiscoveryStats>> {
+    const startTime = Date.now();
+    const stats: DiscoveryStats = {
+      scannedDirectories: 0,
+      foundProjects: 0,
+      newProjects: 0,
+      updatedProjects: 0,
+      errors: 0,
+      duration: 0,
+    };
+
+    try {
+      const {
+        scanPaths,
+        maxDepth = 10,
+        excludePatterns = DEFAULT_EXCLUDE_PATTERNS,
+        batchSize = 50
+      } = options;
+
+      // Validate scan paths
+      for (const scanPath of scanPaths) {
+        try {
+          await fs.access(scanPath, fs.constants.R_OK);
+        } catch (error) {
+          return {
+            ok: false,
+            error: new Error(`Scan path not accessible: ${scanPath}`)
+          };
+        }
+      }
+
+      // Find all .killall.yaml files
+      const configFiles: string[] = [];
+      
+      for (const scanPath of scanPaths) {
+        const filesResult = await this.findConfigFiles(scanPath, maxDepth, excludePatterns);
+        if (!filesResult.ok) {
+          stats.errors++;
+          this.emit({
+            type: 'error',
+            path: scanPath,
+            error: filesResult.error
+          });
+          continue;
+        }
+        configFiles.push(...filesResult.value);
+      }
+
+      stats.foundProjects = configFiles.length;
+
+      // Process config files in batches for performance
+      const batches = this.createBatches(configFiles, batchSize);
+      
+      for (const batch of batches) {
+        const batchResult = await this.processBatch(batch, stats);
+        if (!batchResult.ok) {
+          stats.errors++;
+          // Continue with other batches even if one fails
+        }
+      }
+
+      // Clean up removed projects
+      const cleanupResult = await this.cleanupRemovedProjects(configFiles);
+      if (!cleanupResult.ok) {
+        stats.errors++;
+      }
+
+      stats.duration = Date.now() - startTime;
+      return { ok: true, value: stats };
+
+    } catch (error) {
+      stats.duration = Date.now() - startTime;
+      stats.errors++;
+      
+      return {
+        ok: false,
+        error: error instanceof Error ? error : new Error('Unknown discovery error')
+      };
+    }
+  }
+
+  /**
+   * Recursively find all .killall.yaml files in a directory
+   */
+  private async findConfigFiles(
+    dirPath: string,
+    maxDepth: number,
+    excludePatterns: string[]
+  ): Promise<Result<string[]>> {
+    const configFiles: string[] = [];
+
+    try {
+      await this.scanDirectory(dirPath, configFiles, maxDepth, 0, excludePatterns);
+      return { ok: true, value: configFiles };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error : new Error('Directory scan failed')
+      };
+    }
+  }
+
+  /**
+   * Recursively scan directory for config files
+   */
+  private async scanDirectory(
+    dirPath: string,
+    configFiles: string[],
+    maxDepth: number,
+    currentDepth: number,
+    excludePatterns: string[]
+  ): Promise<void> {
+    if (currentDepth > maxDepth) {
+      return;
+    }
+
+    try {
+      const entries = await fs.readdir(dirPath, { withFileTypes: true });
+
+      for (const entry of entries) {
+        const fullPath = path.join(dirPath, entry.name);
+
+        // Check exclusion patterns
+        if (excludePatterns.some(pattern => entry.name.includes(pattern))) {
+          continue;
+        }
+
+        if (entry.isFile() && entry.name === '.killall.yaml') {
+          configFiles.push(fullPath);
+        } else if (entry.isDirectory()) {
+          await this.scanDirectory(
+            fullPath,
+            configFiles,
+            maxDepth,
+            currentDepth + 1,
+            excludePatterns
+          );
+        }
+      }
+    } catch (error) {
+      // Skip directories we can't read (permissions, etc.)
+      // This is normal for system directories
+    }
+  }
+
+  /**
+   * Create batches of items for processing
+   */
+  private createBatches<T>(items: T[], batchSize: number): T[][] {
+    const batches: T[][] = [];
+    for (let i = 0; i < items.length; i += batchSize) {
+      batches.push(items.slice(i, i + batchSize));
+    }
+    return batches;
+  }
+
+  /**
+   * Process a batch of config files
+   */
+  private async processBatch(
+    configFiles: string[],
+    stats: DiscoveryStats
+  ): Promise<Result<void>> {
+    try {
+      const promises = configFiles.map(configFile => this.processConfigFile(configFile, stats));
+      await Promise.allSettled(promises);
+      
+      return { ok: true, value: undefined };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error : new Error('Batch processing failed')
+      };
+    }
+  }
+
+  /**
+   * Process a single config file
+   */
+  private async processConfigFile(configFile: string, stats: DiscoveryStats): Promise<void> {
+    try {
+      stats.scannedDirectories++;
+      
+      // Parse and validate config
+      const configResult = await parseConfigFile(configFile);
+      if (!configResult.ok) {
+        stats.errors++;
+        this.emit({
+          type: 'error',
+          path: configFile,
+          error: configResult.error
+        });
+        return;
+      }
+
+      const projectPath = path.dirname(configFile);
+      const config = configResult.value;
+
+      // Check if project already exists
+      const existingResult = await this.projectRepository.findByPath(projectPath);
+      if (!existingResult.ok) {
+        stats.errors++;
+        this.emit({
+          type: 'error',
+          path: configFile,
+          error: existingResult.error
+        });
+        return;
+      }
+
+      const now = new Date();
+      
+      if (existingResult.value) {
+        // Update existing project
+        const existing = existingResult.value;
+        const newDestroyAt = this.calculateDestroyTime(config.timeout, now);
+        
+        const updateResult = await this.projectRepository.update(existing.id, {
+          name: config.name,
+          config: JSON.stringify(config),
+          destroyAt: newDestroyAt
+        });
+
+        if (updateResult.ok) {
+          stats.updatedProjects++;
+          
+          // Log update event
+          await this.eventRepository.log({
+            projectId: existing.id,
+            eventType: 'discovered' as EventType,
+            details: JSON.stringify({ action: 'updated', configPath: configFile })
+          });
+
+          this.emit({
+            type: 'updated',
+            project: updateResult.value
+          });
+        } else {
+          stats.errors++;
+          this.emit({
+            type: 'error',
+            path: configFile,
+            error: updateResult.error
+          });
+        }
+      } else {
+        // Create new project
+        const destroyAt = this.calculateDestroyTime(config.timeout, now);
+        
+        const newProject: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = {
+          path: projectPath,
+          name: config.name,
+          config: JSON.stringify(config),
+          discoveredAt: now,
+          destroyAt,
+          status: 'active'
+        };
+
+        const createResult = await this.projectRepository.create(newProject);
+        
+        if (createResult.ok) {
+          stats.newProjects++;
+          
+          // Log discovery event
+          await this.eventRepository.log({
+            projectId: createResult.value.id,
+            eventType: 'discovered' as EventType,
+            details: JSON.stringify({ action: 'created', configPath: configFile })
+          });
+
+          this.emit({
+            type: 'discovered',
+            project: createResult.value
+          });
+        } else {
+          stats.errors++;
+          this.emit({
+            type: 'error',
+            path: configFile,
+            error: createResult.error
+          });
+        }
+      }
+    } catch (error) {
+      stats.errors++;
+      this.emit({
+        type: 'error',
+        path: configFile,
+        error: error instanceof Error ? error : new Error('Unknown processing error')
+      });
+    }
+  }
+
+  /**
+   * Calculate destroy time based on timeout string
+   */
+  private calculateDestroyTime(timeout: string, baseTime: Date): Date {
+    const durationResult = parseDuration(timeout);
+    if (durationResult.ok) {
+      return new Date(baseTime.getTime() + durationResult.value);
+    }
+    
+    // Fallback to 2 hours if parsing fails
+    return new Date(baseTime.getTime() + 2 * 60 * 60 * 1000);
+  }
+
+  /**
+   * Clean up projects that no longer have config files
+   */
+  private async cleanupRemovedProjects(foundConfigFiles: string[]): Promise<Result<void>> {
+    try {
+      // Get all active projects
+      const activeResult = await this.projectRepository.findActive();
+      if (!activeResult.ok) {
+        return activeResult;
+      }
+
+      const foundPaths = new Set(foundConfigFiles.map(f => path.dirname(f)));
+      
+      for (const project of activeResult.value) {
+        if (!foundPaths.has(project.path)) {
+          // Project config file was removed
+          const deleteResult = await this.projectRepository.delete(project.id);
+          
+          if (deleteResult.ok) {
+            // Log removal event
+            await this.eventRepository.log({
+              projectId: project.id,
+              eventType: 'cancelled' as EventType,
+              details: JSON.stringify({ 
+                action: 'removed',
+                reason: 'config_file_deleted',
+                path: project.path
+              })
+            });
+
+            this.emit({
+              type: 'removed',
+              project
+            });
+          }
+        }
+      }
+
+      return { ok: true, value: undefined };
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error : new Error('Cleanup failed')
+      };
+    }
+  }
+
+  /**
+   * Discover single project by path (for targeted discovery)
+   */
+  public async discoverProject(projectPath: string): Promise<Result<Project | null>> {
+    try {
+      const configFile = path.join(projectPath, '.killall.yaml');
+      
+      // Check if config file exists
+      try {
+        await fs.access(configFile, fs.constants.R_OK);
+      } catch {
+        return { ok: true, value: null }; // No config file found
+      }
+
+      // Parse config
+      const configResult = await parseConfigFile(configFile);
+      if (!configResult.ok) {
+        return configResult;
+      }
+
+      const config = configResult.value;
+      const now = new Date();
+      const destroyAt = this.calculateDestroyTime(config.timeout, now);
+
+      // Check if project exists
+      const existingResult = await this.projectRepository.findByPath(projectPath);
+      if (!existingResult.ok) {
+        return existingResult;
+      }
+
+      if (existingResult.value) {
+        // Update existing
+        const updateResult = await this.projectRepository.update(existingResult.value.id, {
+          name: config.name,
+          config: JSON.stringify(config),
+          destroyAt
+        });
+
+        if (updateResult.ok) {
+          this.emit({ type: 'updated', project: updateResult.value });
+        }
+
+        return updateResult;
+      } else {
+        // Create new
+        const newProject: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = {
+          path: projectPath,
+          name: config.name,
+          config: JSON.stringify(config),
+          discoveredAt: now,
+          destroyAt,
+          status: 'active'
+        };
+
+        const createResult = await this.projectRepository.create(newProject);
+        
+        if (createResult.ok) {
+          // Log discovery event
+          await this.eventRepository.log({
+            projectId: createResult.value.id,
+            eventType: 'discovered' as EventType,
+            details: JSON.stringify({ action: 'created', configPath: configFile })
+          });
+
+          this.emit({ type: 'discovered', project: createResult.value });
+        }
+
+        return createResult;
+      }
+    } catch (error) {
+      return {
+        ok: false,
+        error: error instanceof Error ? error : new Error('Project discovery failed')
+      };
+    }
+  }
+}
