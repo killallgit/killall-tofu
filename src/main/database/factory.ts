@@ -75,8 +75,16 @@ export const createDatabaseFactory = (
 export const isDrizzleConnection = (
   db: DatabaseService | DrizzleConnection
 ): db is DrizzleConnection => {
-  // Check for Drizzle-specific methods
-  return 'run' in db && typeof (db as any).run === 'function';
+  // Check for Drizzle-specific properties and methods
+  // Drizzle connections have a 'run' method and session property
+  const possibleDrizzle = db as any;
+  return (
+    typeof possibleDrizzle.run === 'function' &&
+    typeof possibleDrizzle.all === 'function' &&
+    typeof possibleDrizzle.get === 'function' &&
+    typeof possibleDrizzle.values === 'function' &&
+    possibleDrizzle._ !== undefined // Drizzle internal property
+  );
 };
 
 /**
@@ -88,8 +96,15 @@ export const isDrizzleConnection = (
 export const isDatabaseService = (
   db: DatabaseService | DrizzleConnection
 ): db is DatabaseService => {
-  // Check for DatabaseService-specific methods
-  return 'initialize' in db && typeof (db as any).initialize === 'function';
+  // Check for DatabaseService-specific methods and properties
+  const possibleService = db as any;
+  return (
+    typeof possibleService.initialize === 'function' &&
+    typeof possibleService.close === 'function' &&
+    typeof possibleService.healthCheck === 'function' &&
+    typeof possibleService.getStats === 'function' &&
+    !possibleService._ // Ensure it's not Drizzle (which has _ property)
+  );
 };
 
 /**

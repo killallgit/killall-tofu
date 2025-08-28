@@ -1,4 +1,5 @@
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+import { sql } from 'drizzle-orm';
 import Database from 'better-sqlite3';
 import { Result } from '../../../shared/utils/result';
 
@@ -63,11 +64,17 @@ export const createConnection = (
       return { ok: true, value: db };
     } catch (error) {
       if (retryCount < (finalConfig.maxRetries || 3)) {
-        // Wait before retry
-        const delay = finalConfig.retryDelay || 100;
+        // For SQLite local file connections, synchronous retry is acceptable
+        // as connections are fast and we want immediate failure feedback
+        // Using exponential backoff for retries
+        const baseDelay = finalConfig.retryDelay || 100;
+        const delay = baseDelay * Math.pow(2, retryCount);
+        
+        // Note: Synchronous delay is intentional here as SQLite connections
+        // are local file operations that complete quickly
         const waitUntil = Date.now() + delay;
         while (Date.now() < waitUntil) {
-          // Busy wait (synchronous delay)
+          // Synchronous delay for retry
         }
         
         return attemptConnection(retryCount + 1);
@@ -132,9 +139,14 @@ export const closeConnection = (
   connection: DrizzleConnection
 ): Result<void> => {
   try {
-    // Drizzle doesn't expose close directly, but we can access the underlying SQLite instance
-    // For now, this is a no-op as connections are handled by the SQLite driver
-    // In production, you might want to implement connection pooling
+    // Access the underlying Better-SQLite3 instance to properly close the connection
+    // The connection is stored in the session's client property
+    const sqlite = (connection as any).session?.client;
+    
+    if (sqlite && typeof sqlite.close === 'function') {
+      sqlite.close();
+    }
+    
     return { ok: true, value: undefined };
   } catch (error) {
     return {
@@ -145,6 +157,3 @@ export const closeConnection = (
     };
   }
 };
-
-// Import sql template tag for the test function
-import { sql } from 'drizzle-orm';
