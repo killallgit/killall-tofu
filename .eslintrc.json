@@ -1,0 +1,64 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "extends": [
+    "eslint:recommended"
+  ],
+  "plugins": [
+    "@typescript-eslint",
+    "import"
+  ],
+  "parserOptions": {
+    "ecmaVersion": 2022,
+    "sourceType": "module"
+  },
+  "env": {
+    "node": true,
+    "es2022": true
+  },
+  "rules": {
+    // Functional Programming Standards (from CLAUDE.md)
+    "prefer-const": "error",
+    "no-var": "error",
+    
+    // No global variables
+    "no-implicit-globals": "error",
+    "no-global-assign": "error",
+    
+    // Pure functions and immutability
+    "no-param-reassign": "error",
+    "prefer-rest-params": "error",
+    "prefer-spread": "error",
+    
+    // Error handling
+    "no-unused-vars": "error",
+    "no-throw-literal": "error",
+    
+    // Code quality
+    "import/order": ["error", {
+      "groups": [
+        "builtin",
+        "external", 
+        "internal",
+        "parent",
+        "sibling",
+        "index"
+      ],
+      "newlines-between": "always"
+    }],
+    
+    // Electron specific
+    "no-console": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.spec.ts"],
+      "env": {
+        "jest": true
+      },
+      "rules": {
+        "no-console": "off",
+        "@typescript-eslint/explicit-function-return-type": "off"
+      }
+    }
+  ]
+}

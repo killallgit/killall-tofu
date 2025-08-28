@@ -4,6 +4,17 @@
 
 Killall-Tofu is a macOS menu bar application that automatically destroys Terraform infrastructure after a specified timeout. Never forget to tear down temporary development environments again!
 
+## Current Status
+
+**🚧 In Development - Phase 1 Complete**
+
+- ✅ **Foundation**: Electron + TypeScript + React setup with comprehensive documentation
+- ✅ **Architecture**: Complete system design with service interfaces and data models  
+- ✅ **Menu Bar**: Basic tray icon and window management
+- 🔄 **Next Phase**: Core service implementation (file watcher, scheduler, executor)
+
+The application currently provides a working menu bar tray with placeholder functionality. The next development phase will implement the core infrastructure management features.
+
 ## Features
 
 - 🔍 **Auto-Discovery** - Monitors directories for `.killall.yaml` configuration files
@@ -214,25 +225,70 @@ scanner:
 
 ## Development
 
-See [CLAUDE.md](./CLAUDE.md) for development standards and guidelines.
+### Getting Started
 
-### Project Structure
+```bash
+# Clone and setup
+git clone https://github.com/yourusername/killall-tofu.git
+cd killall-tofu
+npm install
+
+# Run in development mode
+npm run start
+
+# Run linting
+npm run lint
+```
+
+### Current Project Structure
+
+```
+src/
+├── index.ts       # Main Electron process (164 lines)
+├── preload.ts     # IPC bridge (minimal)
+├── renderer.ts    # React renderer (basic)
+└── index.css      # Basic styling
+```
+
+### Planned Structure (Next Phase)
 
 ```
 src/
 ├── main/          # Electron main process
+│   ├── services/  # Core business logic
+│   ├── database/  # SQLite data layer  
+│   └── config/    # Configuration management
 ├── renderer/      # React UI components
-└── shared/        # Shared utilities
+│   ├── components/# UI components
+│   ├── hooks/     # Custom React hooks
+│   └── contexts/  # State management
+└── shared/        # Shared utilities & types
+    ├── types.ts   # TypeScript definitions
+    └── utils/     # Helper functions
 ```
 
-### Commands
+### Available Commands
 
 ```bash
-npm run dev        # Start development server
-npm run test       # Run tests
-npm run build      # Build application
-npm run package    # Create distributables
+npm run start      # Start development server (Electron Forge)
+npm run package    # Package application for distribution
+npm run make       # Create distributables (DMG, ZIP)
+npm run lint       # Run ESLint
+npm run publish    # Publish release (future)
 ```
+
+### Next Steps for Developers
+
+See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for detailed development roadmap and [DEVELOPMENT.md](./DEVELOPMENT.md) for setup instructions.
+
+**Immediate Tasks:**
+1. Set up Jest testing framework
+2. Create shared TypeScript definitions
+3. Implement database service and schema
+4. Build file watcher service with Chokidar
+5. Create React component structure
+
+For development standards and functional programming guidelines, see [CLAUDE.md](./CLAUDE.md).
 
 ## Contributing
 
