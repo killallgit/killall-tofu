@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1756396324668,
+      "tag": "0000_fine_the_renegades",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1756396399814,
+      "tag": "0001_greedy_fallen_one",
+      "breakpoints": true
+    }
+  ]
+}
