@@ -158,10 +158,10 @@ describe('Testing Foundation Integration', () => {
   it('should demonstrate functional programming patterns', () => {
     // Chain operations using Result type
     const process = (input: string) => {
-      return parseDuration(input)
-        |> (result => map(result, duration => duration.milliseconds))
-        |> (result => map(result, ms => ms / 1000))
-        |> (result => map(result, seconds => `${seconds} seconds`));
+      const step1 = parseDuration(input);
+      const step2 = map(step1, duration => duration.milliseconds);
+      const step3 = map(step2, ms => ms / 1000);
+      return map(step3, seconds => `${seconds} seconds`);
     };
 
     // Note: Pipeline operator not available, so we'll use nested calls

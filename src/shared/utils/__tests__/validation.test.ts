@@ -75,7 +75,7 @@ describe('Validation utilities', () => {
       expect(isOk(validator([]))).toBe(true);
       expect(isOk(validator([1, 2, 3]))).toBe(true);
       expect(isErr(validator('array'))).toBe(true);
-      expect(isErr(validator({})).toBe(true);
+      expect(isErr(validator({}))).toBe(true);
       expect(isErr(validator(null))).toBe(true);
     });
 

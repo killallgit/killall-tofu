@@ -8,6 +8,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+
+#### Drizzle ORM Migration - Phase 1A: Setup and Configuration
+- **Drizzle ORM Installation**: Added drizzle-orm and better-sqlite3 dependencies for modern ORM support
+- **Drizzle Kit Integration**: Configured drizzle-kit for migration generation and database management
+- **Configuration File**: Created `drizzle.config.ts` with SQLite dialect configuration
+- **Database Connection Module**: Implemented `src/main/database/drizzle/connection.ts` with Result types and retry logic
+  - Connection pooling support with configurable options
+  - WAL mode and foreign key enforcement for performance
+  - Pure functional design with explicit error handling
+- **Factory Pattern**: Created `src/main/database/factory.ts` for seamless migration between raw SQL and Drizzle
+  - Feature flag system using `USE_DRIZZLE` environment variable
+  - Type guards for implementation detection
+  - Backward compatibility with existing DatabaseService
+- **Database Management Scripts**: Added npm scripts for database operations
+  - `db:generate` - Generate Drizzle migrations from schema
+  - `db:migrate` - Apply migrations to database
+  - `db:studio` - Launch Drizzle Studio for visual database management
+  - `db:push` - Push schema changes directly (development)
+- **Environment Configuration**: Added `.env.example` with database and feature flag settings
+- **TypeScript Upgrade**: Updated TypeScript to latest version for compatibility with Drizzle types
+
+### Technical
 - Initial project setup with Electron Forge TypeScript template
 - Menu bar application structure with tray icon integration
 - Complete technical specification and architecture documentation
