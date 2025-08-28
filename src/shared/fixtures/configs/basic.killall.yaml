@@ -1,0 +1,7 @@
+# Basic killall configuration
+version: 1
+timeout: "1 hour"
+name: "basic-project"
+tags:
+  - "test"
+  - "basic"

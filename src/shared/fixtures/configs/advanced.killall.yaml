@@ -1,0 +1,28 @@
+# Advanced killall configuration with all options
+version: 1
+timeout: "2 hours"
+name: "advanced-project"
+command: "terraform destroy -auto-approve"
+tags:
+  - "terraform"
+  - "infrastructure"
+  - "production"
+
+execution:
+  retries: 3
+  environment:
+    TF_VAR_env: "test"
+    AWS_REGION: "us-east-1"
+  workingDirectory: "./terraform"
+  shell: "/bin/bash"
+
+hooks:
+  beforeDestroy:
+    - "echo 'Starting destroy process'"
+    - "aws s3 sync s3://backup-bucket ./backup/"
+  afterDestroy:
+    - "echo 'Destroy completed'"
+    - "rm -rf ./backup"
+  onFailure:
+    - "echo 'Destroy failed, sending alert'"
+    - "slack-notify 'Infrastructure destroy failed'"

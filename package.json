@@ -9,7 +9,12 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx src/"
+    "lint": "eslint --ext .ts,.tsx src/",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:ci": "jest --ci --coverage --watchAll=false",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [],
   "author": {
@@ -43,6 +48,9 @@
     "eslint-plugin-import": "^2.32.0",
     "fork-ts-checker-webpack-plugin": "^7.3.0",
     "jest": "^30.1.1",
+    "jest-environment-node": "^29.7.0",
+    "jest-junit": "^16.0.0",
+    "jest-watch-typeahead": "^2.2.2",
     "node-loader": "^2.1.0",
     "style-loader": "^3.3.4",
     "ts-jest": "^29.4.1",
