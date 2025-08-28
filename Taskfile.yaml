@@ -1,0 +1,29 @@
+version: '3'
+
+tasks:
+  dev:
+    desc: Start local development server
+    cmds:
+      - npm run start
+
+  lint:
+    desc: Run ESLint on TypeScript files
+    cmds:
+      - npm run lint
+
+  test:
+    desc: Run Jest tests
+    cmds:
+      - npm run test
+
+  typecheck:
+    desc: Run TypeScript type checking
+    cmds:
+      - npm run typecheck
+
+  check:
+    desc: Run all pre-commit checks (lint, typecheck, test)
+    cmds:
+      - task: lint
+      - task: typecheck
+      - task: test

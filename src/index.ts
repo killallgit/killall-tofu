@@ -100,9 +100,17 @@ const createWindow = (): void => {
   // Load the index.html of the app
   mainWindow.loadURL(MAIN_WINDOW_WEBPACK_ENTRY);
 
-  // Show window when ready
+  // Position window near tray icon
   mainWindow.once('ready-to-show', () => {
-    if (mainWindow) {
+    if (mainWindow && tray) {
+      const trayBounds = tray.getBounds();
+      const windowBounds = mainWindow.getBounds();
+      
+      // Position window below the tray icon (macOS menu bar)
+      const x = Math.round(trayBounds.x + (trayBounds.width / 2) - (windowBounds.width / 2));
+      const y = Math.round(trayBounds.y + trayBounds.height + 4);
+      
+      mainWindow.setPosition(x, y, false);
       mainWindow.show();
     }
   });
