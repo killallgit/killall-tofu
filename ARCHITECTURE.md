@@ -4,6 +4,21 @@
 
 Killall-Tofu is built as an Electron application with a clear separation between the main process (backend services) and renderer process (UI). The architecture follows functional programming principles with immutable state management and pure functions wherever possible.
 
+## Implementation Status
+
+**Phase 1 Complete (Foundation)**
+- ✅ Electron application structure with TypeScript
+- ✅ Menu bar tray icon and window management  
+- ✅ Complete system design documentation
+- ✅ Development standards and functional programming guidelines
+
+**Phase 2 In Progress (Core Services)**
+- 🔄 File watcher service implementation
+- 🔄 Database service with SQLite integration
+- 🔄 Scheduler service for timer management
+- 🔄 React UI components and IPC bridge
+- 🔄 System notification integration
+
 ## Core Design Principles
 
 1. **No Global State** - All state is explicitly managed and passed
@@ -588,6 +603,81 @@ interface UpdateManager {
   onUpdateAvailable(handler: UpdateHandler): void;
 }
 ```
+
+## Implementation Priority Matrix
+
+### Phase 2: Core Services (Current Focus)
+
+#### High Priority - Week 1-2
+1. **Foundation & Testing Infrastructure**
+   - Jest testing framework setup
+   - Shared TypeScript definitions (`src/shared/types.ts`)
+   - Result type utilities and functional helpers
+   - Mock service implementations for parallel development
+
+2. **Database Service** (`src/main/database/`)
+   - SQLite integration with connection management
+   - Schema creation and migration system  
+   - Repository pattern for data access
+   - Transaction support for consistency
+
+#### Medium Priority - Week 2-3  
+3. **File Watcher Service** (`src/main/services/watcher.ts`)
+   - Chokidar integration for file system monitoring
+   - `.killall.yaml` file detection and parsing
+   - Event emission for project discovery/removal
+   - Performance optimization for large directories
+
+4. **Configuration Manager** (`src/main/config/`)
+   - YAML parsing and validation
+   - Configuration merging (global + project)
+   - File system utilities with error handling
+
+#### Medium Priority - Week 3-4
+5. **Scheduler Service** (`src/main/services/scheduler.ts`)
+   - Timer registry with immutable state
+   - Natural language duration parsing
+   - Warning event scheduling
+   - Timer extension and cancellation logic
+
+6. **IPC Bridge** (`src/main/ipc/` and `src/preload.ts`)
+   - Secure inter-process communication
+   - Real-time event streaming to UI
+   - Type-safe command interface
+
+#### Lower Priority - Week 4-5
+7. **Executor Service** (`src/main/services/executor.ts`)
+   - Subprocess spawning for Terraform commands
+   - Output capture and streaming
+   - Retry logic with exponential backoff
+   - Concurrent execution management
+
+8. **React UI Components** (`src/renderer/`)
+   - Menu dropdown with proper positioning
+   - Real-time countdown displays
+   - User controls for timer management
+   - Settings interface
+
+### Service Dependency Graph
+```
+Foundation → Database → Configuration
+    ↓           ↓           ↓
+Testing → File Watcher → Scheduler → UI Components
+    ↓           ↓           ↓           ↓
+   IPC ← Notifications ← Executor ← Integration
+```
+
+### Critical Path Analysis
+**Blocking Dependencies:**
+- Foundation blocks all other development
+- Database service blocks File Watcher and Configuration
+- IPC bridge blocks React UI development
+- Integration testing requires all services
+
+**Parallel Development Opportunities:**
+- Database and Configuration can develop simultaneously after Foundation
+- Executor and Notification services are largely independent
+- UI components can be developed with mocked IPC layer
 
 ## Monitoring & Observability
 

@@ -28,4 +28,5 @@
 
 import './index.css';
 
-console.log('👋 This message is being logged by "renderer.js", included via webpack');
+// Initial renderer setup - replace with React app initialization
+// console.log('👋 This message is being logged by "renderer.js", included via webpack');

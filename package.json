@@ -9,7 +9,7 @@
     "package": "electron-forge package",
     "make": "electron-forge make",
     "publish": "electron-forge publish",
-    "lint": "eslint --ext .ts,.tsx ."
+    "lint": "eslint --ext .ts,.tsx src/"
   },
   "keywords": [],
   "author": {
@@ -27,6 +27,10 @@
     "@electron-forge/plugin-fuses": "^7.8.3",
     "@electron-forge/plugin-webpack": "^7.8.3",
     "@electron/fuses": "^1.8.0",
+    "@testing-library/jest-dom": "^6.8.0",
+    "@testing-library/react": "^16.3.0",
+    "@testing-library/user-event": "^14.6.1",
+    "@types/jest": "^30.0.0",
     "@types/js-yaml": "^4.0.9",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.8",
@@ -38,8 +42,10 @@
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "fork-ts-checker-webpack-plugin": "^7.3.0",
+    "jest": "^30.1.1",
     "node-loader": "^2.1.0",
     "style-loader": "^3.3.4",
+    "ts-jest": "^29.4.1",
     "ts-loader": "^9.5.4",
     "typescript": "~4.5.4"
   },
