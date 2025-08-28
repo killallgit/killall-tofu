@@ -1,11 +1,12 @@
 // Project discovery service tests
 // Tests directory scanning, project registration, and lifecycle management
 
-import { ProjectDiscoveryService, DiscoveryOptions } from '../projectDiscovery';
-import { Result, ProjectRepository, EventRepository, Project } from '../../database/types';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
+
+import { Result, ProjectRepository, EventRepository, Project } from '../../database/types';
+import { ProjectDiscoveryService, DiscoveryOptions } from '../projectDiscovery';
 
 // Mock repositories
 class MockProjectRepository implements ProjectRepository {
@@ -351,7 +352,9 @@ name: "Deep Project"
       const result = await discoveryService.discover(options);
 
       expect(result.ok).toBe(false);
-      expect(result.error?.message).toContain('Scan path not accessible');
+      if (!result.ok) {
+        expect(result.error?.message).toContain('Scan path not accessible');
+      }
     });
   });
 
@@ -387,7 +390,9 @@ name: "Single Project"
       const result = await discoveryService.discoverProject(projectDir);
 
       expect(result.ok).toBe(true);
-      expect(result.value).toBeNull();
+      if (result.ok) {
+        expect(result.value).toBeNull();
+      }
 
       const projects = mockProjectRepo.getAllProjects();
       expect(projects).toHaveLength(0);

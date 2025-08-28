@@ -2,9 +2,10 @@
  * Mock notifier service implementation for testing and parallel development.
  */
 
+import { EventEmitter } from 'events';
+
 import { NotifierService, NotificationMessage, NotificationType, Result } from '../types';
 import { Ok, Err } from '../utils/result';
-import { EventEmitter } from 'events';
 
 interface NotificationLog {
   message: NotificationMessage;
@@ -15,7 +16,7 @@ interface NotificationLog {
 
 export class MockNotifier extends EventEmitter implements NotifierService {
   private notificationLog: NotificationLog[] = [];
-  private subscribers: Array<(message: NotificationMessage) => void> = [];
+  private subscribers: Array<(_message: NotificationMessage) => void> = [];
   private config: {
     deliveryDelay: number;
     failureRate: number;
@@ -84,7 +85,7 @@ export class MockNotifier extends EventEmitter implements NotifierService {
     return Ok(void 0);
   }
 
-  subscribe(callback: (message: NotificationMessage) => void): void {
+  subscribe(callback: (_message: NotificationMessage) => void): void {
     this.subscribers.push(callback);
   }
 
@@ -309,7 +310,7 @@ export const TEST_SCENARIOS = {
 
   // Subscriber stress test
   subscriberStressTest: (notifier: MockNotifier, subscriberCount: number) => {
-    const subscribers: Array<(msg: NotificationMessage) => void> = [];
+    const subscribers: Array<(_msg: NotificationMessage) => void> = [];
     
     for (let i = 0; i < subscriberCount; i++) {
       const subscriber = (msg: NotificationMessage) => {

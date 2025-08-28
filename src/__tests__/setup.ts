@@ -133,7 +133,7 @@ jest.mock('winston', () => ({
 }));
 
 // Global test utilities
-global.testUtils = {
+(global as any).testUtils = {
   // Create a timeout promise for async testing
   timeout: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
   
@@ -184,17 +184,5 @@ afterAll(() => {
   }
 });
 
-// Type declarations for global utilities
-declare global {
-  namespace NodeJS {
-    interface Global {
-      testUtils: {
-        timeout: (ms: number) => Promise<void>;
-        mockDate: (date: Date) => void;
-        restoreDate: () => void;
-        createTempPath: (name: string) => string;
-        mockEnv: (vars: Record<string, string>) => () => void;
-      };
-    }
-  }
-}
+// Type declarations for global utilities (commented out due to module context issues)
+// Use (global as any).testUtils to access these utilities in tests

@@ -2,7 +2,7 @@
  * Functional programming utilities for composition and data transformation.
  */
 
-import { Result, AsyncResult, Mapper, AsyncMapper, Predicate, AsyncPredicate } from '../types';
+import { Result, Mapper, AsyncMapper, Predicate, AsyncPredicate } from '../types';
 
 // Function composition
 export const compose = <A, B, C>(
@@ -79,7 +79,7 @@ export const findArrayAsync = <T>(predicate: AsyncPredicate<T>) =>
   };
 
 // Object utilities
-export const pick = <T, K extends keyof T>(keys: readonly K[]) => 
+export const pick = <T extends object, K extends keyof T>(keys: readonly K[]) => 
   (obj: T): Pick<T, K> => {
     const result = {} as Pick<T, K>;
     keys.forEach(key => {
@@ -152,7 +152,7 @@ export const debounce = <T extends unknown[]>(
   fn: (...args: T) => void,
   delay: number
 ) => {
-  let timeoutId: NodeJS.Timeout | undefined;
+  let timeoutId: ReturnType<typeof setTimeout> | undefined;
   return (...args: T) => {
     if (timeoutId) {
       clearTimeout(timeoutId);

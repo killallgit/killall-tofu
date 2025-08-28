@@ -3,7 +3,9 @@
  */
 
 import * as path from 'path';
+
 import { Result } from '../types';
+
 import { Ok, Err } from './result';
 
 // Path validation
@@ -155,6 +157,7 @@ export const sanitizePath = (pathStr: string): Result<string, Error> => {
   const dangerous = [
     /\.\./g,           // Directory traversal
     /[<>:"|?*]/g,      // Windows reserved characters
+    // eslint-disable-next-line no-control-regex
     /[\x00-\x1f]/g,    // Control characters
     /^\.+$/,           // Dot-only names
     /\s+$/,            // Trailing whitespace

@@ -2,14 +2,15 @@
  * Mock scheduler service implementation for testing and parallel development.
  */
 
+import { EventEmitter } from 'events';
+
 import { SchedulerService, Project, Result } from '../types';
 import { Ok, Err } from '../utils/result';
-import { EventEmitter } from 'events';
 
 interface ScheduledTask {
   project: Project;
   scheduledFor: Date;
-  timeoutId?: NodeJS.Timeout;
+  timeoutId?: ReturnType<typeof setTimeout>;
 }
 
 export class MockScheduler extends EventEmitter implements SchedulerService {

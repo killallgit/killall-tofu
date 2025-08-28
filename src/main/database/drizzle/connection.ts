@@ -1,6 +1,7 @@
 import { drizzle, BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 import { sql } from 'drizzle-orm';
 import Database from 'better-sqlite3';
+
 import { Result } from '../../../shared/types';
 
 export type DrizzleConnection = BetterSQLite3Database;

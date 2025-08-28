@@ -1,10 +1,11 @@
 // Configuration validator tests
 // Tests YAML parsing, duration parsing, path validation, and security checks
 
-import { parseDuration, validatePath, validateConfig, parseConfigFile, ConfigValidationError } from '../configValidator';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
+
+import { parseDuration, validatePath, validateConfig, parseConfigFile, ConfigValidationError } from '../configValidator';
 
 describe('parseDuration', () => {
   it('should parse valid duration strings correctly', () => {

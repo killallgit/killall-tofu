@@ -2,13 +2,14 @@
  * Mock executor service implementation for testing and parallel development.
  */
 
+import { EventEmitter } from 'events';
+
 import { ExecutorService, Project, Execution, ExecutionStatus, Result } from '../types';
 import { Ok, Err } from '../utils/result';
-import { EventEmitter } from 'events';
 
 interface RunningExecution {
   execution: Execution;
-  timeoutId?: NodeJS.Timeout;
+  timeoutId?: ReturnType<typeof setTimeout>;
   startTime: number;
 }
 
@@ -98,7 +99,7 @@ export class MockExecutor extends EventEmitter implements ExecutorService {
     return 'exec_' + Math.random().toString(36).substring(2, 15);
   }
 
-  private simulateExecution(executionId: string, project: Project): void {
+  private simulateExecution(executionId: string, _project: Project): void {
     const running = this.runningExecutions.get(executionId);
     if (!running) return;
 

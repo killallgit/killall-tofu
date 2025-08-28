@@ -5,6 +5,9 @@
 
 import { Result, AsyncResult } from '../types';
 
+// Re-export types for convenience
+export type { Result, AsyncResult } from '../types';
+
 // Result constructors
 export const Ok = <T>(value: T): Result<T, never> => ({ ok: true, value });
 export const Err = <E>(error: E): Result<never, E> => ({ ok: false, error });
@@ -97,14 +100,14 @@ export const unwrapOrElse = <T, E>(
 export const combine = <T extends readonly unknown[], E>(
   results: { readonly [K in keyof T]: Result<T[K], E> }
 ): Result<T, E> => {
-  const values = [] as unknown as T;
+  const values = [] as any as T;
   
   for (let i = 0; i < results.length; i++) {
     const result = results[i];
     if (isErr(result)) {
       return result;
     }
-    (values as unknown[])[i] = result.value;
+    (values as unknown as any[])[i] = result.value;
   }
   
   return Ok(values);
