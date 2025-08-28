@@ -1,0 +1,21 @@
+# Docker project configuration
+version: 1
+timeout: "30 minutes"
+name: "docker-cleanup"
+command: "docker-compose down --volumes --remove-orphans"
+tags:
+  - "docker"
+  - "containers"
+  - "cleanup"
+
+execution:
+  retries: 2
+  environment:
+    COMPOSE_PROJECT_NAME: "test-project"
+  workingDirectory: "./docker"
+
+hooks:
+  beforeDestroy:
+    - "docker-compose logs > ./logs/final.log"
+  afterDestroy:
+    - "docker system prune -f"
