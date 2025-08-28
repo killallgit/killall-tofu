@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
+
+import { Project, ProjectStatus } from '../shared/types';
+
 import ProjectList from './components/ProjectList';
 import Header from './components/Header';
-import { Project, ProjectStatus } from '../shared/types';
 import './App.css';
 
 const mockProjects: Project[] = [

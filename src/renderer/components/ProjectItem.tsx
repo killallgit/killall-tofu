@@ -1,4 +1,5 @@
 import React from 'react';
+
 import { Project } from '../../shared/types';
 import './ProjectItem.css';
 

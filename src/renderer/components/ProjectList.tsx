@@ -1,6 +1,8 @@
 import React from 'react';
-import ProjectItem from './ProjectItem';
+
 import { Project } from '../../shared/types';
+
+import ProjectItem from './ProjectItem';
 import './ProjectList.css';
 
 interface ProjectListProps {
