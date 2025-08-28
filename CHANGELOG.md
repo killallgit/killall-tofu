@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Research
+- **ORM Evaluation** (Issue #8) - Comprehensive analysis of TypeScript ORM options
+  - Evaluated Drizzle, Prisma, Kysely, TypeORM, and MikroORM for SQLite/Electron compatibility
+  - Created detailed comparison matrix with bundle sizes, dependencies, and TypeScript support
+  - **Recommendation**: Drizzle ORM selected for 7.4KB bundle size and functional programming alignment
+  - Developed complete migration strategy from raw SQL to Drizzle with 6-day timeline
+  - Documented rollback strategy and performance benchmarks
+
 ### Added
 - Initial project setup with Electron Forge TypeScript template
 - Menu bar application structure with tray icon integration
