@@ -88,29 +88,31 @@ export interface ProjectConfig {
 }
 
 // Database transaction function type
-export type TransactionFn<T> = (trx: any) => Promise<T>;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export type TransactionFn<T> = (_trx: any) => Promise<T>;
 
 // Database service interfaces
+/* eslint-disable @typescript-eslint/no-unused-vars */
 export interface ProjectRepository {
-  create(project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Result<Project>>;
-  update(id: string, updates: Partial<Pick<Project, 'name' | 'destroyAt' | 'status' | 'config'>>): Promise<Result<Project>>;
-  delete(id: string): Promise<Result<void>>;
-  findById(id: string): Promise<Result<Project | null>>;
-  findByPath(path: string): Promise<Result<Project | null>>;
+  create(_project: Omit<Project, 'id' | 'createdAt' | 'updatedAt'>): Promise<Result<Project>>;
+  update(_id: string, _updates: Partial<Pick<Project, 'name' | 'destroyAt' | 'status' | 'config'>>): Promise<Result<Project>>;
+  delete(_id: string): Promise<Result<void>>;
+  findById(_id: string): Promise<Result<Project | null>>;
+  findByPath(_path: string): Promise<Result<Project | null>>;
   findActive(): Promise<Result<Project[]>>;
-  findByStatus(status: ProjectStatus): Promise<Result<Project[]>>;
+  findByStatus(_status: ProjectStatus): Promise<Result<Project[]>>;
 }
 
 export interface ExecutionRepository {
-  create(execution: Omit<Execution, 'id'>): Promise<Result<number>>;
-  update(id: number, updates: Partial<Pick<Execution, 'completedAt' | 'exitCode' | 'stdout' | 'stderr' | 'status'>>): Promise<Result<Execution>>;
-  findByProject(projectId: string): Promise<Result<Execution[]>>;
+  create(_execution: Omit<Execution, 'id'>): Promise<Result<number>>;
+  update(_id: number, _updates: Partial<Pick<Execution, 'completedAt' | 'exitCode' | 'stdout' | 'stderr' | 'status'>>): Promise<Result<Execution>>;
+  findByProject(_projectId: string): Promise<Result<Execution[]>>;
   findRunning(): Promise<Result<Execution[]>>;
 }
 
 export interface EventRepository {
-  log(event: Omit<Event, 'id' | 'timestamp'>): Promise<Result<number>>;
-  query(filters: {
+  log(_event: Omit<Event, 'id' | 'timestamp'>): Promise<Result<number>>;
+  query(_filters: {
     projectId?: string;
     eventType?: EventType;
     since?: Date;
@@ -121,10 +123,11 @@ export interface EventRepository {
 export interface Database {
   connect(): Promise<Result<void>>;
   disconnect(): Promise<Result<void>>;
-  transaction<T>(fn: TransactionFn<T>): Promise<Result<T>>;
+  transaction<T>(_fn: TransactionFn<T>): Promise<Result<T>>;
   
   // Repository instances
   projects: ProjectRepository;
   executions: ExecutionRepository;
   events: EventRepository;
 }
+/* eslint-enable @typescript-eslint/no-unused-vars */

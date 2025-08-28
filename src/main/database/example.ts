@@ -102,7 +102,7 @@ async function exampleUsage(): Promise<void> {
 
     // Example: Transaction usage
     console.log('Testing transaction...');
-    const transactionResult = await db.transaction(async (trx) => {
+    const transactionResult = await db.transaction(async () => {
       // Update project status
       const updateResult = await db.projects.update(createResult.value.id, {
         status: 'destroying'
