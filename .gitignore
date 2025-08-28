@@ -35,6 +35,9 @@ Thumbs.db
 .npm
 .eslintcache
 
+# Test coverage
+coverage/
+
 # Keep .github directory and its contents
 !.github/
 !.github/**
