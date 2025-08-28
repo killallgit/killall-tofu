@@ -172,7 +172,7 @@ export class DatabaseService implements Database {
     try {
       // Test basic query
       const testQuery = new Promise<void>((resolve, reject) => {
-        this.db!.get('SELECT 1 as test', (err, row) => {
+        this.db!.get('SELECT 1 as test', (err) => {
           if (err) reject(err);
           else resolve();
         });
