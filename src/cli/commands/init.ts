@@ -4,9 +4,8 @@ import * as os from 'os';
 
 import { Command } from 'commander';
 import * as yaml from 'js-yaml';
-import { v4 as uuidv4 } from 'uuid';
 
-import { getDatabase } from '../../main/database/factory';
+import { createDatabaseFactory } from '../../main/database/factory';
 import type { Result } from '../../shared/types';
 
 interface InitOptions {
@@ -80,7 +79,8 @@ async function runInit(options: InitOptions): Promise<void> {
   });
 
   if (!result.ok) {
-    throw new Error(`Failed to register project in database: ${(result as any).error.message}`);
+    const error = 'error' in result ? result.error : new Error('Unknown registration error');
+    throw new Error(`Failed to register project in database: ${error.message}`);
   }
 
   console.log(`✓ Registered project in database (ID: ${result.value})`);
@@ -103,22 +103,35 @@ async function registerProject(project: ProjectData): Promise<Result<string>> {
     const homeDir = os.homedir();
     const dbPath = path.join(homeDir, '.killall', 'killall.db');
     
-    // Check if database exists
-    if (!fs.existsSync(dbPath)) {
+    // Validate database path to prevent path traversal
+    const normalizedDbPath = path.resolve(dbPath);
+    const expectedDbPath = path.resolve(path.join(homeDir, '.killall', 'killall.db'));
+    if (normalizedDbPath !== expectedDbPath) {
       return {
         ok: false,
-        error: new Error(`Killall-tofu database not found at ${dbPath}. Please ensure the main application is installed`),
+        error: new Error('Invalid database path detected'),
       };
     }
     
-    // Set environment variable for database path
-    process.env.DATABASE_PATH = dbPath;
-    process.env.USE_DRIZZLE = 'true';
+    // Check if database directory exists, create if it doesn't
+    const dbDir = path.dirname(normalizedDbPath);
+    if (!fs.existsSync(dbDir)) {
+      try {
+        fs.mkdirSync(dbDir, { recursive: true });
+      } catch (error) {
+        return {
+          ok: false,
+          error: new Error(`Failed to create database directory: ${error instanceof Error ? error.message : String(error)}`),
+        };
+      }
+    }
     
-    // Get database connection
-    const dbResult = await getDatabase();
+    // Create database factory with explicit path (avoid environment variable injection)
+    const factory = createDatabaseFactory(normalizedDbPath);
+    const dbResult = await factory.createDatabase();
     if (!dbResult.ok) {
-      return { ok: false, error: (dbResult as any).error };
+      const error = 'error' in dbResult ? dbResult.error : new Error('Unknown database error');
+      return { ok: false, error };
     }
 
     const db = dbResult.value;
@@ -143,7 +156,8 @@ async function registerProject(project: ProjectData): Promise<Result<string>> {
     });
 
     if (!createResult.ok) {
-      return { ok: false, error: (createResult as any).error };
+      const error = 'error' in createResult ? createResult.error : new Error('Unknown project creation error');
+      return { ok: false, error };
     }
 
     return { ok: true, value: createResult.value.id };
@@ -162,18 +176,21 @@ function parseDuration(duration: string): number | null {
   if (!match) {
     // Try parsing complex durations like "1h30m"
     let totalMs = 0;
-    const parts = duration.match(/(\d+)([hms])/g);
+    const parts = duration.match(/(\d+)([hmsd])/g);
     
     if (!parts) return null;
     
     for (const part of parts) {
-      const partMatch = part.match(/(\d+)([hms])/);
+      const partMatch = part.match(/(\d+)([hmsd])/);
       if (!partMatch) return null;
       
       const value = parseInt(partMatch[1], 10);
       const unit = partMatch[2];
       
       switch (unit) {
+        case 'd':
+          totalMs += value * 24 * 60 * 60 * 1000;
+          break;
         case 'h':
           totalMs += value * 60 * 60 * 1000;
           break;
