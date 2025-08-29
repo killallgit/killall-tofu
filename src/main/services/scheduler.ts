@@ -19,8 +19,22 @@ import {
   ProjectStatus
 } from '../../shared/types';
 import { Ok, Err } from '../../shared/utils/result';
+import {
+  calculateWarningSchedules,
+  calculateMillisecondsUntil,
+  isTimeInFuture,
+  formatTimeRemaining
+} from '../utils/timeCalculations';
+import {
+  createScheduledJob,
+  cancelJob,
+  cancelProjectJobs,
+  getProjectJobs,
+  hasJobForProject,
+  ScheduledJob as ManagedScheduledJob
+} from '../utils/jobManager';
 
-interface ScheduledJob {
+interface LegacyScheduledJob {
   projectId: string;
   destroyAt: Date;
   timeoutHandle: ReturnType<typeof setTimeout>;
@@ -46,7 +60,7 @@ interface SchedulerConfig {
  * Uses pure functional patterns with explicit dependency injection
  */
 export class SchedulerService extends EventEmitter implements ISchedulerService {
-  private scheduledJobs = new Map<string, ScheduledJob>();
+  private scheduledJobs = new Map<string, ManagedScheduledJob>();
   private isRunning = false;
   private stats: SchedulerStats = {
     scheduledJobs: 0,
@@ -115,7 +129,7 @@ export class SchedulerService extends EventEmitter implements ISchedulerService 
     try {
       // Cancel all scheduled jobs
       for (const [projectId, job] of this.scheduledJobs.entries()) {
-        clearTimeout(job.timeoutHandle);
+        cancelJob(job);
         this.scheduledJobs.delete(projectId);
       }
 
@@ -151,15 +165,14 @@ export class SchedulerService extends EventEmitter implements ISchedulerService 
    * Cancel a scheduled project destruction
    */
   async cancel(projectId: string): Promise<Result<void>> {
-    const scheduledJob = this.scheduledJobs.get(projectId);
-    if (!scheduledJob) {
+    // Cancel all jobs for this project (destruction + warnings)
+    const cancelledJobs = cancelProjectJobs(projectId, this.scheduledJobs);
+    
+    if (cancelledJobs.length === 0) {
       return Err(new Error(`Project ${projectId} is not scheduled`));
     }
 
-    // Cancel the timeout
-    clearTimeout(scheduledJob.timeoutHandle);
-    this.scheduledJobs.delete(projectId);
-    this.stats.activeJobs--;
+    this.stats.activeJobs -= cancelledJobs.length;
 
     // Update project status to active
     const updateResult = await this.projectRepository.update(projectId, { 
@@ -233,12 +246,12 @@ export class SchedulerService extends EventEmitter implements ISchedulerService 
       await this.executeDestruction(project);
     }, msUntilDestroy);
 
-    const job: ScheduledJob = {
-      projectId: project.id,
+    const job = createScheduledJob(
+      project.id,
       destroyAt,
       timeoutHandle,
-      retryCount: 0
-    };
+      'destruction'
+    );
 
     this.scheduledJobs.set(project.id, job);
     this.stats.activeJobs++;
@@ -257,20 +270,27 @@ export class SchedulerService extends EventEmitter implements ISchedulerService 
    * Schedule warning notifications before destruction
    */
   private scheduleWarnings(project: Project, destroyAt: Date): void {
-    const now = new Date();
+    const warningSchedules = calculateWarningSchedules(destroyAt, this.config.warningTimes);
     
-    for (const warningMinutes of this.config.warningTimes) {
-      const warningTime = new Date(destroyAt.getTime() - (warningMinutes * 60 * 1000));
-      const msUntilWarning = warningTime.getTime() - now.getTime();
-      
-      if (msUntilWarning > 0) {
-        setTimeout(() => {
+    for (const schedule of warningSchedules) {
+      if (schedule.shouldSchedule) {
+        const timeoutId = setTimeout(() => {
           this.emit('warning', {
             projectId: project.id,
-            minutesRemaining: warningMinutes,
+            minutesRemaining: schedule.warningMinutes,
             destroyAt
           });
-        }, msUntilWarning);
+        }, schedule.msUntilWarning);
+        
+        // Store warning job for potential cancellation
+        const warningJob = createScheduledJob(
+          project.id,
+          destroyAt,
+          timeoutId,
+          'warning',
+          schedule.warningMinutes
+        );
+        this.scheduledJobs.set(warningJob.id, warningJob);
       }
     }
   }
@@ -322,9 +342,9 @@ export class SchedulerService extends EventEmitter implements ISchedulerService 
   private async handleExecutionFailure(
     project: Project, 
     error: Error, 
-    job?: ScheduledJob
+    job?: ManagedScheduledJob
   ): Promise<Result<void>> {
-    const retryCount = job?.retryCount || 0;
+    const retryCount = 0; // TODO: Add retry count tracking to job manager
     
     if (retryCount < this.config.retryAttempts) {
       // Schedule retry in 5 minutes
@@ -334,8 +354,17 @@ export class SchedulerService extends EventEmitter implements ISchedulerService 
       }, retryDelay);
 
       if (job) {
-        job.retryCount++;
-        job.timeoutHandle = retryHandle;
+        // Cancel the old job and create a new retry job
+        cancelJob(job);
+        this.scheduledJobs.delete(job.id);
+        
+        const retryJob = createScheduledJob(
+          project.id,
+          project.destroyAt,
+          retryHandle,
+          'destruction'
+        );
+        this.scheduledJobs.set(retryJob.id, retryJob);
       }
 
       this.emit('retry_scheduled', {

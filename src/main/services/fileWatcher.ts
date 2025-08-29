@@ -7,6 +7,20 @@ import * as path from 'path';
 import * as chokidar from 'chokidar';
 
 import { Result, Database, Project } from '../database/types';
+import { 
+  getProjectPathFromConfig,
+  isKillallConfigFile,
+  isPathWatched,
+  addPathToWatched,
+  removePathFromWatched
+} from '../utils/pathManager';
+import { TimerRegistry } from '../utils/eventDebouncer';
+import {
+  determineFileEventAction,
+  updateStatsFromResult,
+  createEventDetails,
+  ProcessingStats
+} from '../utils/fileEventProcessor';
 
 import { ProjectDiscoveryService, ProjectDiscoveryEvent, DiscoveryOptions } from './projectDiscovery';
 
@@ -46,8 +60,8 @@ export interface FileWatcherStats {
 export class FileWatcherService extends EventEmitter {
   private watcher: chokidar.FSWatcher | null = null;
   private projectDiscovery: ProjectDiscoveryService;
-  private watchedPaths: string[] = [];
-  private debounceTimers: Map<string, ReturnType<typeof setTimeout>> = new Map();
+  private watchedPaths: Set<string> = new Set();
+  private debounceTimers: TimerRegistry = new TimerRegistry();
   private stats: FileWatcherStats = {
     watchedPaths: [],
     watchedFiles: 0,
@@ -140,7 +154,7 @@ export class FileWatcherService extends EventEmitter {
       this.setupWatcherEventHandlers(debounceDelay);
 
       // Update stats
-      this.watchedPaths = [...watchPaths];
+      this.watchedPaths = new Set(watchPaths);
       this.stats = {
         watchedPaths: [...watchPaths],
         watchedFiles: 0,
@@ -190,12 +204,11 @@ export class FileWatcherService extends EventEmitter {
       }
 
       // Clear any pending debounce timers
-      this.debounceTimers.forEach(timer => clearTimeout(timer));
-      this.debounceTimers.clear();
+      this.debounceTimers.clearAllTimers();
 
       // Reset stats
       this.stats.isWatching = false;
-      this.watchedPaths = [];
+      this.watchedPaths.clear();
 
       return { ok: true, value: undefined };
     } catch (error) {
@@ -210,7 +223,10 @@ export class FileWatcherService extends EventEmitter {
    * Get current watcher statistics
    */
   public getStats(): FileWatcherStats {
-    return { ...this.stats };
+    return { 
+      ...this.stats,
+      watchedPaths: Array.from(this.watchedPaths)
+    };
   }
 
   /**
@@ -226,7 +242,7 @@ export class FileWatcherService extends EventEmitter {
 
     try {
       const discoveryOptions: DiscoveryOptions = {
-        scanPaths: this.watchedPaths,
+        scanPaths: Array.from(this.watchedPaths),
         maxDepth: 10,
       };
 
@@ -288,19 +304,10 @@ export class FileWatcherService extends EventEmitter {
    * Handle file system events with debouncing
    */
   private handleFileEvent(event: string, filePath: string, debounceDelay: number): void {
-    // Clear existing debounce timer for this file
-    const existingTimer = this.debounceTimers.get(filePath);
-    if (existingTimer) {
-      clearTimeout(existingTimer);
-    }
-
-    // Set new debounce timer
-    const timer = setTimeout(async () => {
-      this.debounceTimers.delete(filePath);
+    // Use TimerRegistry for debouncing
+    this.debounceTimers.setTimer(filePath, async () => {
       await this.processFileEvent(event, filePath);
     }, debounceDelay);
-
-    this.debounceTimers.set(filePath, timer);
   }
 
   /**
@@ -308,51 +315,45 @@ export class FileWatcherService extends EventEmitter {
    */
   private async processFileEvent(event: string, filePath: string): Promise<void> {
     try {
-      const projectPath = path.dirname(filePath);
+      const projectPath = getProjectPathFromConfig(filePath);
+      const action = determineFileEventAction(event);
 
-      switch (event) {
-        case 'add':
-        case 'change': {
-          // Config file added or changed - discover/update project
-          const result = await this.projectDiscovery.discoverProject(projectPath);
-          if (result.ok && result.value) {
-            // Project discovery service will emit appropriate events
-            this.stats.discoveredProjects++;
-          } else if (!result.ok) {
-            this.stats.errors++;
-            this.emit('error', result.error);
-          }
-          break;
+      if (action === 'ignore') {
+        return;
+      }
+
+      if (action === 'discover') {
+        // Config file added or changed - discover/update project
+        const result = await this.projectDiscovery.discoverProject(projectPath);
+        const newStats = updateStatsFromResult(this.stats, result);
+        this.stats.discoveredProjects = newStats.discoveredProjects;
+        this.stats.errors = newStats.errors;
+        
+        if (!result.ok) {
+          this.emit('error', result.error);
         }
+      } else if (action === 'remove') {
+        // Config file removed - clean up project
+        const findResult = await this.database.projects.findByPath(projectPath);
+        if (findResult.ok && findResult.value) {
+          const deleteResult = await this.database.projects.delete(findResult.value.id);
+          if (deleteResult.ok) {
+            // Log removal event
+            await this.database.events.log({
+              projectId: findResult.value.id,
+              eventType: 'cancelled',
+              details: createEventDetails('removed', 'config_file_deleted', projectPath)
+            });
 
-        case 'unlink': {
-          // Config file removed - clean up project
-          const findResult = await this.database.projects.findByPath(projectPath);
-          if (findResult.ok && findResult.value) {
-            const deleteResult = await this.database.projects.delete(findResult.value.id);
-            if (deleteResult.ok) {
-              // Log removal event
-              await this.database.events.log({
-                projectId: findResult.value.id,
-                eventType: 'cancelled',
-                details: JSON.stringify({
-                  action: 'removed',
-                  reason: 'config_file_deleted',
-                  path: projectPath
-                })
-              });
-
-              this.emit('projectRemoved', {
-                type: 'projectRemoved',
-                project: findResult.value,
-                path: filePath
-              });
-            } else {
-              this.stats.errors++;
-              this.emit('error', deleteResult.error);
-            }
+            this.emit('projectRemoved', {
+              type: 'projectRemoved',
+              project: findResult.value,
+              path: filePath
+            });
+          } else {
+            this.stats.errors++;
+            this.emit('error', deleteResult.error);
           }
-          break;
         }
       }
     } catch (error) {
@@ -413,9 +414,8 @@ export class FileWatcherService extends EventEmitter {
       const watchGlob = path.join(watchPath, '**/.killall.yaml');
       this.watcher.add(watchGlob);
       
-      if (!this.watchedPaths.includes(watchPath)) {
-        this.watchedPaths.push(watchPath);
-        this.stats.watchedPaths.push(watchPath);
+      if (!isPathWatched(watchPath, this.watchedPaths)) {
+        this.watchedPaths = addPathToWatched(watchPath, this.watchedPaths);
       }
 
       return { ok: true, value: undefined };
@@ -443,10 +443,8 @@ export class FileWatcherService extends EventEmitter {
       const watchGlob = path.join(watchPath, '**/.killall.yaml');
       this.watcher.unwatch(watchGlob);
       
-      const index = this.watchedPaths.indexOf(watchPath);
-      if (index >= 0) {
-        this.watchedPaths.splice(index, 1);
-        this.stats.watchedPaths.splice(index, 1);
+      if (isPathWatched(watchPath, this.watchedPaths)) {
+        this.watchedPaths = removePathFromWatched(watchPath, this.watchedPaths);
       }
 
       return { ok: true, value: undefined };

@@ -21,6 +21,25 @@ import {
   Result
 } from '../../shared/types';
 import { Ok, Err } from '../../shared/utils/result';
+import { 
+  parseCommandString, 
+  getDefaultCommand,
+  validateCommandArgs 
+} from '../utils/commandParser';
+import { 
+  buildExecutionEnvironment,
+  filterSensitiveEnvVars,
+  validateEnvironment 
+} from '../utils/environmentBuilder';
+import {
+  generateExecutionId,
+  createExecutionResult,
+  isExecutionSuccessful,
+  createExecutionError,
+  validateExecutionOptions,
+  ExecutionResult,
+  ExecutionOptions
+} from '../utils/processExecution';
 
 interface RunningExecution {
   execution: Execution;
@@ -81,7 +100,7 @@ export class ExecutorService extends EventEmitter implements IExecutorService {
       // Determine command to execute
       const command = this.getExecutionCommand(project);
       const workingDir = project.path;
-      const environment = this.buildExecutionEnvironment(project);
+      const environment = buildExecutionEnvironment(this.config, project);
 
       // Create execution record
       const execution: Omit<Execution, 'id'> = {
@@ -206,7 +225,7 @@ export class ExecutorService extends EventEmitter implements IExecutorService {
       const startTime = Date.now();
 
       // Parse command and arguments
-      const [cmd, ...args] = this.parseCommand(command);
+      const [cmd, ...args] = parseCommandString(command);
 
       // Spawn the process
       const childProcess = spawn(cmd, args, {
@@ -351,59 +370,16 @@ export class ExecutorService extends EventEmitter implements IExecutorService {
    * Get the command to execute for a project
    */
   private getExecutionCommand(project: Project): string {
-    // Use project-specific command if provided, otherwise default
-    return project.config.command || 'terraform destroy -auto-approve';
+    const projectConfig = typeof project.config === 'string' 
+      ? JSON.parse(project.config) 
+      : project.config;
+    return projectConfig?.command || 'terraform destroy -auto-approve';
   }
 
   /**
    * Build execution environment variables
    */
-  private buildExecutionEnvironment(project: Project): Record<string, string> {
-    const baseEnv = { ...this.config.environment };
-    
-    // Add project-specific environment variables if provided
-    if (project.config.execution?.environment) {
-      Object.assign(baseEnv, project.config.execution.environment);
-    }
 
-    return baseEnv;
-  }
-
-  /**
-   * Parse command string into command and arguments
-   */
-  private parseCommand(command: string): string[] {
-    // Simple command parsing - splits on spaces but respects quotes
-    const parts: string[] = [];
-    let current = '';
-    let inQuotes = false;
-    let quoteChar = '';
-
-    for (let i = 0; i < command.length; i++) {
-      const char = command[i];
-      
-      if (!inQuotes && (char === '"' || char === "'")) {
-        inQuotes = true;
-        quoteChar = char;
-      } else if (inQuotes && char === quoteChar) {
-        inQuotes = false;
-        quoteChar = '';
-      } else if (!inQuotes && char === ' ') {
-        if (current) {
-          parts.push(current);
-          current = '';
-        }
-      } else {
-        current += char;
-      }
-    }
-
-    if (current) {
-      parts.push(current);
-    }
-
-    return parts.length > 0 ? parts : ['terraform', 'destroy', '-auto-approve'];
-  }
 
   /**
    * Get executor statistics
