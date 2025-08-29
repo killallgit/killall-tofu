@@ -25,7 +25,8 @@
     "benchmark:all": "npm run benchmark && npm run benchmark:memory && npm run benchmark:bundle",
     "cli:build": "node scripts/build-cli-simple.js",
     "cli:run": "ts-node src/cli/index.ts",
-    "prepackage": "npm run cli:build"
+    "prepackage": "npm run cli:build",
+    "postinstall": "npx @electron/rebuild"
   },
   "keywords": [],
   "author": {
@@ -58,6 +59,7 @@
     "css-loader": "^6.11.0",
     "drizzle-kit": "^0.31.4",
     "electron": "37.4.0",
+    "electron-rebuild": "^3.2.9",
     "eslint": "^8.57.1",
     "eslint-plugin-import": "^2.32.0",
     "fork-ts-checker-webpack-plugin": "^7.3.0",

@@ -1,9 +1,11 @@
-import { Command } from 'commander';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
+
+import { Command } from 'commander';
 import * as yaml from 'js-yaml';
 import { v4 as uuidv4 } from 'uuid';
+
 import { getDatabase } from '../../main/database/factory';
 import type { Result } from '../../shared/types';
 
