@@ -1,6 +1,7 @@
 // Services module exports
-// Centralized export for all file watcher related services
+// Centralized export for all Killall-Tofu services
 
+// File system and project discovery services
 export { FileWatcherService } from './fileWatcher';
 export type { FileWatcherOptions, FileWatcherEvent, FileWatcherStats } from './fileWatcher';
 
@@ -11,6 +12,13 @@ export type {
   ProjectDiscoveryEvent 
 } from './projectDiscovery';
 
+// Core business logic services
+export { SchedulerService } from './scheduler';
+export { ExecutorService } from './executor';
+export { NotifierService } from './notifier';
+export { ConfigurationService } from './configuration';
+
+// Configuration and validation utilities
 export { 
   parseDuration,
   validatePath,
