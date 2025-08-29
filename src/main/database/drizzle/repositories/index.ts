@@ -14,6 +14,14 @@ export type { IRepository, BatchResult } from './base';
 export { processBatch } from './base';
 
 // Import repository classes for factory
+import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
+
+import { 
+  ProjectRepository,
+  ExecutionRepository,
+  EventRepository
+} from '../../types';
+
 import { DrizzleProjectRepository, projectQueries } from './projects';
 import { DrizzleExecutionRepository, executionQueries } from './executions';
 import { DrizzleEventRepository, eventQueries } from './events';
@@ -44,12 +52,6 @@ export type {
  * Factory function to create all repositories with a single database connection.
  * Ensures consistent database instance across all repositories.
  */
-import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
-import { 
-  ProjectRepository,
-  ExecutionRepository,
-  EventRepository
-} from '../../types';
 
 export interface DrizzleRepositories {
   projects: ProjectRepository;

@@ -1,7 +1,6 @@
 import { eq, desc, and, or, gte, lte, sql } from 'drizzle-orm';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-import { BaseDrizzleRepository } from './base';
 import { projects, Project, NewProject } from '../schema/projects';
 import { 
   Result,
@@ -9,6 +8,8 @@ import {
   ProjectStatus,
   Project as IProject
 } from '../../types';
+
+import { BaseDrizzleRepository } from './base';
 
 /**
  * Drizzle implementation of ProjectRepository.

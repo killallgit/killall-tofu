@@ -1,7 +1,6 @@
 import { eq, desc, and, gte, lte, isNull, or } from 'drizzle-orm';
 import { BetterSQLite3Database } from 'drizzle-orm/better-sqlite3';
 
-import { BaseDrizzleRepository } from './base';
 import { events, Event, NewEvent } from '../schema/events';
 import { 
   Result,
@@ -9,6 +8,8 @@ import {
   EventType,
   Event as IEvent
 } from '../../types';
+
+import { BaseDrizzleRepository } from './base';
 
 /**
  * Drizzle implementation of EventRepository.
