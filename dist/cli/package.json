@@ -1,0 +1,11 @@
+{
+  "name": "killall-cli",
+  "version": "1.0.0",
+  "description": "Killall-Tofu CLI",
+  "main": "src/index.ts",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "js-yaml": "^4.1.0",
+    "uuid": "^10.0.0"
+  }
+}

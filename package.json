@@ -22,7 +22,10 @@
     "benchmark": "ts-node scripts/benchmark-drizzle.ts",
     "benchmark:memory": "node --expose-gc -r ts-node/register scripts/memory-test.ts",
     "benchmark:bundle": "ts-node scripts/bundle-size-analysis.ts",
-    "benchmark:all": "npm run benchmark && npm run benchmark:memory && npm run benchmark:bundle"
+    "benchmark:all": "npm run benchmark && npm run benchmark:memory && npm run benchmark:bundle",
+    "cli:build": "node scripts/build-cli-simple.js",
+    "cli:run": "ts-node src/cli/index.ts",
+    "prepackage": "npm run cli:build"
   },
   "keywords": [],
   "author": {
@@ -70,8 +73,10 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "@types/uuid": "^10.0.0",
     "better-sqlite3": "^12.2.0",
     "chokidar": "^4.0.3",
+    "commander": "^14.0.0",
     "date-fns": "^4.1.0",
     "drizzle-orm": "^0.44.5",
     "electron-squirrel-startup": "^1.0.1",
@@ -79,6 +84,7 @@
     "react": "^19.1.1",
     "react-dom": "^19.1.1",
     "sqlite3": "^5.1.7",
+    "uuid": "^11.1.0",
     "winston": "^3.17.0"
   }
 }
