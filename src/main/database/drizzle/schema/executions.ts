@@ -38,7 +38,7 @@ export const executions = sqliteTable('executions', {
   
   // Execution status
   status: text('status', {
-    enum: ['running', 'completed', 'failed', 'timeout']
+    enum: ['queued', 'running', 'completed', 'failed', 'cancelled', 'timeout']
   }).notNull(),
   
   // Retry attempt number
@@ -58,9 +58,11 @@ export type NewExecution = typeof executions.$inferInsert;
 
 // Status enum for type safety
 export const ExecutionStatus = {
+  QUEUED: 'queued',
   RUNNING: 'running',
   COMPLETED: 'completed',
   FAILED: 'failed',
+  CANCELLED: 'cancelled',
   TIMEOUT: 'timeout'
 } as const;
 

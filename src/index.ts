@@ -110,10 +110,19 @@ const createTrayFactory = (state: AppState, createWindow: () => BrowserWindow) =
       enabled: false
     },
     { type: 'separator' },
-    { 
-      label: 'Settings', 
+    {
+      label: 'Dashboard',
       type: 'normal',
       click: (): void => {
+        createWindow();
+      }
+    },
+    {
+      label: 'Settings',
+      type: 'normal',
+      click: (): void => {
+        // TODO: In the future, this should open a separate settings window
+        // For now, it opens the main dashboard window which includes settings
         createWindow();
       }
     },
@@ -129,13 +138,9 @@ const createTrayFactory = (state: AppState, createWindow: () => BrowserWindow) =
   
   tray.setContextMenu(contextMenu);
   
-  // Handle tray clicks
+  // Handle tray clicks - show context menu instead of auto-opening window
   tray.on('click', () => {
-    if (state.mainWindow?.isVisible()) {
-      state.mainWindow.hide();
-    } else {
-      createWindow();
-    }
+    tray?.popUpContextMenu();
   });
 
   state.tray = tray;
