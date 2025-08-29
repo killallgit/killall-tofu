@@ -3,6 +3,7 @@
 
 import * as path from 'path';
 import * as fs from 'fs/promises';
+import { constants as fsConstants } from 'fs';
 
 import { Result, Project, ProjectRepository, EventRepository, EventType } from '../database/types';
 
@@ -124,7 +125,7 @@ export class ProjectDiscoveryService {
       // Validate scan paths
       for (const scanPath of scanPaths) {
         try {
-          await fs.access(scanPath, fs.constants.R_OK);
+          await fs.access(scanPath, fsConstants.R_OK);
         } catch (error) {
           return {
             ok: false,
@@ -229,9 +230,13 @@ export class ProjectDiscoveryService {
           continue;
         }
 
-        if (entry.isFile() && entry.name === '.killall.yaml') {
+        // Check if entry has isFile/isDirectory methods or if it's an object with type property
+        const isFile = typeof entry.isFile === 'function' ? entry.isFile() : false;
+        const isDirectory = typeof entry.isDirectory === 'function' ? entry.isDirectory() : false;
+
+        if (isFile && entry.name === '.killall.yaml') {
           configFiles.push(fullPath);
-        } else if (entry.isDirectory()) {
+        } else if (isDirectory) {
           await this.scanDirectory(
             fullPath,
             configFiles,
@@ -464,7 +469,7 @@ export class ProjectDiscoveryService {
       
       // Check if config file exists
       try {
-        await fs.access(configFile, fs.constants.R_OK);
+        await fs.access(configFile, fsConstants.R_OK);
       } catch {
         return { ok: true, value: null }; // No config file found
       }
