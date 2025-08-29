@@ -79,7 +79,10 @@
         "**/example*.ts",
         "**/Example*.ts",
         "**/demo*.ts",
-        "**/Demo*.ts"
+        "**/Demo*.ts",
+        "**/mock*.ts",
+        "**/Mock*.ts",
+        "**/mocks/**/*.ts"
       ],
       "rules": {
         "no-console": "off"

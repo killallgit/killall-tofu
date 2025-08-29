@@ -9,16 +9,23 @@ import * as yaml from 'js-yaml';
 import { Result, ProjectConfig } from '../database/types';
 
 // Configuration validation errors
-export class ConfigValidationError extends Error {
-  constructor(
-    message: string,
-    public readonly field?: string,
-    public readonly value?: unknown
-  ) {
-    super(message);
-    this.name = 'ConfigValidationError';
-  }
+export interface ConfigValidationError extends Error {
+  name: 'ConfigValidationError';
+  readonly field?: string;
+  readonly value?: unknown;
 }
+
+export const createConfigValidationError = (
+  message: string,
+  field?: string,
+  value?: unknown
+): ConfigValidationError => {
+  const error = new Error(message) as ConfigValidationError;
+  error.name = 'ConfigValidationError';
+  (error as any).field = field;
+  (error as any).value = value;
+  return error;
+};
 
 // Duration parsing utilities
 const DURATION_REGEX = /^(\d+)\s*(seconds?|secs?|minutes?|mins?|hours?|hrs?|days?|d|h|m|s)$/i;
@@ -51,7 +58,7 @@ export const parseDuration = (duration: string): Result<number> => {
   if (!duration || typeof duration !== 'string') {
     return {
       ok: false,
-      error: new ConfigValidationError('Duration must be a non-empty string', 'timeout', duration)
+      error: createConfigValidationError('Duration must be a non-empty string', 'timeout', duration)
     };
   }
 
@@ -61,7 +68,7 @@ export const parseDuration = (duration: string): Result<number> => {
   if (!match) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         'Invalid duration format. Use formats like "2 hours", "30 minutes", "1 day"',
         'timeout',
         duration
@@ -75,7 +82,7 @@ export const parseDuration = (duration: string): Result<number> => {
   if (!multiplier) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         `Unsupported duration unit: ${unit}`,
         'timeout',
         duration
@@ -89,7 +96,7 @@ export const parseDuration = (duration: string): Result<number> => {
   if (milliseconds < 1000 || milliseconds > 30 * 24 * 60 * 60 * 1000) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         'Duration must be between 1 second and 30 days',
         'timeout',
         duration
@@ -107,14 +114,14 @@ export const validatePath = (filePath: string, basePath: string): Result<string>
   if (!filePath || typeof filePath !== 'string') {
     return {
       ok: false,
-      error: new ConfigValidationError('Path must be a non-empty string', 'path', filePath)
+      error: createConfigValidationError('Path must be a non-empty string', 'path', filePath)
     };
   }
 
   if (!basePath || typeof basePath !== 'string') {
     return {
       ok: false,
-      error: new ConfigValidationError('Base path must be a non-empty string', 'path', basePath)
+      error: createConfigValidationError('Base path must be a non-empty string', 'path', basePath)
     };
   }
 
@@ -123,7 +130,7 @@ export const validatePath = (filePath: string, basePath: string): Result<string>
     if (filePath.includes('..') || filePath.startsWith('/')) {
       return {
         ok: false,
-        error: new ConfigValidationError(
+        error: createConfigValidationError(
           'Path traversal detected - path must be within project directory',
           'path',
           filePath
@@ -146,7 +153,7 @@ export const validatePath = (filePath: string, basePath: string): Result<string>
     if (!resolvedWithSeparator.startsWith(baseWithSeparator) && resolvedPath !== normalizedBase) {
       return {
         ok: false,
-        error: new ConfigValidationError(
+        error: createConfigValidationError(
           'Path traversal detected - path must be within project directory',
           'path',
           filePath
@@ -158,7 +165,7 @@ export const validatePath = (filePath: string, basePath: string): Result<string>
   } catch (error) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         `Invalid path: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'path',
         filePath
@@ -177,7 +184,7 @@ export const validateFileExists = async (filePath: string): Promise<Result<void>
   } catch (error) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         `File not found or not accessible: ${filePath}`,
         'path',
         filePath
@@ -197,7 +204,7 @@ export const validateConfig = async (
   if (!config || typeof config !== 'object' || Array.isArray(config)) {
     return {
       ok: false,
-      error: new ConfigValidationError('Configuration must be an object')
+      error: createConfigValidationError('Configuration must be an object')
     };
   }
 
@@ -207,7 +214,7 @@ export const validateConfig = async (
   if (typeof cfg.version !== 'number' || cfg.version !== 1) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         'Version must be 1 (only supported version)',
         'version',
         cfg.version
@@ -219,7 +226,7 @@ export const validateConfig = async (
   if (typeof cfg.timeout !== 'string') {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         'Timeout must be a string',
         'timeout',
         cfg.timeout
@@ -236,7 +243,7 @@ export const validateConfig = async (
   if (cfg.name !== undefined && typeof cfg.name !== 'string') {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         'Name must be a string',
         'name',
         cfg.name
@@ -248,7 +255,7 @@ export const validateConfig = async (
   if (cfg.command !== undefined && typeof cfg.command !== 'string') {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         'Command must be a string',
         'command',
         cfg.command
@@ -261,7 +268,7 @@ export const validateConfig = async (
     if (!Array.isArray(cfg.tags) || !cfg.tags.every(tag => typeof tag === 'string')) {
       return {
         ok: false,
-        error: new ConfigValidationError(
+        error: createConfigValidationError(
           'Tags must be an array of strings',
           'tags',
           cfg.tags
@@ -275,7 +282,7 @@ export const validateConfig = async (
     if (!cfg.execution || typeof cfg.execution !== 'object' || Array.isArray(cfg.execution)) {
       return {
         ok: false,
-        error: new ConfigValidationError(
+        error: createConfigValidationError(
           'Execution must be an object',
           'execution',
           cfg.execution
@@ -290,7 +297,7 @@ export const validateConfig = async (
       if (typeof exec.working_directory !== 'string') {
         return {
           ok: false,
-          error: new ConfigValidationError(
+          error: createConfigValidationError(
             'Working directory must be a string',
             'execution.working_directory',
             exec.working_directory
@@ -315,7 +322,7 @@ export const validateConfig = async (
       if (!exec.environment_variables || typeof exec.environment_variables !== 'object' || Array.isArray(exec.environment_variables)) {
         return {
           ok: false,
-          error: new ConfigValidationError(
+          error: createConfigValidationError(
             'Environment variables must be an object',
             'execution.environment_variables',
             exec.environment_variables
@@ -328,7 +335,7 @@ export const validateConfig = async (
         if (typeof value !== 'string') {
           return {
             ok: false,
-            error: new ConfigValidationError(
+            error: createConfigValidationError(
               `Environment variable ${key} must be a string`,
               `execution.environment_variables.${key}`,
               value
@@ -344,7 +351,7 @@ export const validateConfig = async (
     if (!cfg.hooks || typeof cfg.hooks !== 'object' || Array.isArray(cfg.hooks)) {
       return {
         ok: false,
-        error: new ConfigValidationError(
+        error: createConfigValidationError(
           'Hooks must be an object',
           'hooks',
           cfg.hooks
@@ -359,7 +366,7 @@ export const validateConfig = async (
       if (!['before_destroy', 'after_destroy'].includes(hookName)) {
         return {
           ok: false,
-          error: new ConfigValidationError(
+          error: createConfigValidationError(
             `Unknown hook: ${hookName}. Supported hooks: before_destroy, after_destroy`,
             `hooks.${hookName}`,
             hookCommands
@@ -371,7 +378,7 @@ export const validateConfig = async (
         if (!Array.isArray(hookCommands) || !hookCommands.every(cmd => typeof cmd === 'string')) {
           return {
             ok: false,
-            error: new ConfigValidationError(
+            error: createConfigValidationError(
               `Hook ${hookName} must be an array of strings`,
               `hooks.${hookName}`,
               hookCommands
@@ -425,7 +432,7 @@ export const parseConfigFile = async (filePath: string): Promise<Result<ProjectC
     } catch (error) {
       return {
         ok: false,
-        error: new ConfigValidationError(
+        error: createConfigValidationError(
           `YAML parsing failed: ${error instanceof Error ? error.message : 'Unknown error'}`,
           'yaml',
           content
@@ -439,7 +446,7 @@ export const parseConfigFile = async (filePath: string): Promise<Result<ProjectC
   } catch (error) {
     return {
       ok: false,
-      error: new ConfigValidationError(
+      error: createConfigValidationError(
         `Failed to read configuration file: ${error instanceof Error ? error.message : 'Unknown error'}`,
         'file',
         filePath

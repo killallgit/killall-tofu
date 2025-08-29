@@ -152,12 +152,12 @@ export const debounce = <T extends unknown[]>(
   fn: (...args: T) => void,
   delay: number
 ) => {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+  const state = { timeoutId: undefined as ReturnType<typeof setTimeout> | undefined };
   return (...args: T) => {
-    if (timeoutId) {
-      clearTimeout(timeoutId);
+    if (state.timeoutId) {
+      clearTimeout(state.timeoutId);
     }
-    timeoutId = setTimeout(() => fn(...args), delay);
+    state.timeoutId = setTimeout(() => fn(...args), delay);
   };
 };
 
@@ -165,11 +165,11 @@ export const throttle = <T extends unknown[]>(
   fn: (...args: T) => void,
   delay: number
 ) => {
-  let lastCall = 0;
+  const state = { lastCall: 0 };
   return (...args: T) => {
     const now = Date.now();
-    if (now - lastCall >= delay) {
-      lastCall = now;
+    if (now - state.lastCall >= delay) {
+      state.lastCall = now;
       fn(...args);
     }
   };

@@ -38,6 +38,9 @@ Thumbs.db
 # Test coverage
 coverage/
 
+# Serena AI assistant
+.serena/
+
 # Keep .github directory and its contents
 !.github/
 !.github/**

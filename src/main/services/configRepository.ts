@@ -107,20 +107,16 @@ export class DatabaseConfigRepository implements ConfigRepository {
         const existingQuery = `SELECT value FROM app_configurations WHERE key = ?`;
         const existingRows = await trx.all(existingQuery, [this.configKey]);
         
-        let currentConfig: AppConfig;
-        
-        if (existingRows.length === 0) {
-          // No existing config, create with defaults
-          currentConfig = createDefaultConfig();
-        } else {
-          // Parse existing config
-          const existingData = JSON.parse(existingRows[0].value);
-          currentConfig = {
-            ...existingData,
-            createdAt: new Date(existingData.createdAt),
-            updatedAt: new Date(existingData.updatedAt)
-          };
-        }
+        const currentConfig: AppConfig = existingRows.length === 0
+          ? createDefaultConfig()
+          : (() => {
+              const existingData = JSON.parse(existingRows[0].value);
+              return {
+                ...existingData,
+                createdAt: new Date(existingData.createdAt),
+                updatedAt: new Date(existingData.updatedAt)
+              };
+            })();
 
         // Merge with updates
         const updatedConfig: AppConfig = {

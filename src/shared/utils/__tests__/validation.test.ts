@@ -26,6 +26,7 @@ import {
   validateExecutionConfig,
   validateHookConfig,
   ValidationError,
+  createValidationError,
 } from '../validation';
 import { isOk, isErr } from '../result';
 
@@ -290,14 +291,14 @@ describe('Validation utilities', () => {
 
   describe('ValidationError', () => {
     it('should create validation errors with field names', () => {
-      const error = new ValidationError('Test message', 'testField');
+      const error = createValidationError('Test message', 'testField');
       expect(error.message).toBe('Test message');
       expect(error.field).toBe('testField');
       expect(error.name).toBe('ValidationError');
     });
 
     it('should create validation errors without field names', () => {
-      const error = new ValidationError('Test message');
+      const error = createValidationError('Test message');
       expect(error.message).toBe('Test message');
       expect(error.field).toBeUndefined();
     });
