@@ -89,9 +89,24 @@ const createWindowFactory = (state: AppState) => (): BrowserWindow => {
 
 // Create tray factory function
 const createTrayFactory = (state: AppState, createWindow: () => BrowserWindow) => (): Tray => {
-  // Create tray icon - using a default fire emoji for now
-  const icon = nativeImage.createFromNamedImage('NSImageNameStatusAvailable').resize({ width: 16, height: 16 });
-  const tray = new Tray(icon);
+  try {
+    // Create tray icon - using a simple dot for better compatibility
+    let icon;
+    try {
+      // Try to create a system icon first
+      icon = nativeImage.createFromNamedImage('NSImageNameStatusAvailable');
+      if (icon.isEmpty()) {
+        throw new Error('Named image not available');
+      }
+      icon = icon.resize({ width: 16, height: 16 });
+    } catch (iconError) {
+      // Fallback: create a simple 16x16 icon programmatically
+      console.log('Using fallback icon creation');
+      icon = nativeImage.createEmpty();
+    }
+    
+    const tray = new Tray(icon);
+    console.log('Tray created successfully');
   
   // Set tooltip
   tray.setToolTip('Killall-Tofu - Infrastructure Auto-Destroyer');
@@ -143,8 +158,12 @@ const createTrayFactory = (state: AppState, createWindow: () => BrowserWindow) =
     tray?.popUpContextMenu();
   });
 
-  state.tray = tray;
-  return tray;
+    state.tray = tray;
+    return tray;
+  } catch (error) {
+    console.error('Failed to create tray:', error);
+    throw error;
+  }
 };
 
 // IPC handlers setup function
@@ -256,12 +275,19 @@ const initializeApp = () => {
   // This method will be called when Electron has finished
   // initialization and is ready to create browser windows.
   app.whenReady().then(() => {
+    console.log('Electron app ready, platform:', process.platform);
+    
     // Don't show in dock on macOS
     if (process.platform === 'darwin' && app.dock) {
+      console.log('Hiding dock icon on macOS');
       app.dock.hide();
     }
     
+    console.log('Creating tray...');
     createTray();
+    console.log('Tray creation completed');
+  }).catch((error) => {
+    console.error('App initialization failed:', error);
   });
 
   // Quit when all windows are closed, except on macOS where we want to keep the tray

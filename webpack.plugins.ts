@@ -6,5 +6,20 @@ const ForkTsCheckerWebpackPlugin: typeof IForkTsCheckerWebpackPlugin = require('
 export const plugins = [
   new ForkTsCheckerWebpackPlugin({
     logger: 'webpack-infrastructure',
+    typescript: {
+      diagnosticOptions: {
+        semantic: true,
+        syntactic: false,
+      },
+      mode: 'write-references',
+    },
+    // Exclude test files from type checking during development
+    issue: {
+      exclude: [
+        { file: '**/__tests__/**' },
+        { file: '**/*.test.ts' },
+        { file: '**/*.test.tsx' },
+      ],
+    },
   }),
 ];

@@ -6,8 +6,20 @@ import * as fs from 'fs/promises';
 import { constants as fsConstants } from 'fs';
 
 import { Result, Project, ProjectRepository, EventRepository, EventType } from '../database/types';
+import { 
+  findConfigFiles,
+  validateScanPaths,
+  createBatches,
+  DEFAULT_EXCLUDE_PATTERNS
+} from '../utils/projectScanner';
+import { 
+  calculateDestroyTime,
+  getProjectPath,
+  createProjectPathsSet
+} from '../utils/configProcessor';
+import { projectConfigExists } from '../utils/projectValidator';
 
-import { parseConfigFile, parseDuration } from './configValidator';
+import { parseConfigFile } from './configValidator';
 
 export interface DiscoveryOptions {
   /** Root directories to scan for projects */
@@ -36,26 +48,6 @@ export interface ProjectDiscoveryEvent {
   error?: Error;
 }
 
-// Default exclusion patterns for performance
-const DEFAULT_EXCLUDE_PATTERNS = [
-  'node_modules',
-  '.git',
-  '.svn',
-  '.hg',
-  'vendor',
-  'target',
-  'dist',
-  'build',
-  '.next',
-  '.webpack',
-  'coverage',
-  '.terraform',
-  '*.egg-info',
-  '__pycache__',
-  '.pytest_cache',
-  '.vscode',
-  '.idea',
-];
 
 /**
  * Project Discovery Service
@@ -123,22 +115,16 @@ export class ProjectDiscoveryService {
       } = options;
 
       // Validate scan paths
-      for (const scanPath of scanPaths) {
-        try {
-          await fs.access(scanPath, fsConstants.R_OK);
-        } catch (error) {
-          return {
-            ok: false,
-            error: new Error(`Scan path not accessible: ${scanPath}`)
-          };
-        }
+      const validationResult = await validateScanPaths(scanPaths);
+      if (!validationResult.ok) {
+        return validationResult;
       }
 
       // Find all .killall.yaml files
       const configFiles: string[] = [];
       
       for (const scanPath of scanPaths) {
-        const filesResult = await this.findConfigFiles(scanPath, maxDepth, excludePatterns);
+        const filesResult = await findConfigFiles(scanPath, maxDepth, excludePatterns);
         if (!filesResult.ok) {
           stats.errors++;
           this.emit({
@@ -154,7 +140,7 @@ export class ProjectDiscoveryService {
       stats.foundProjects = configFiles.length;
 
       // Process config files in batches for performance
-      const batches = this.createBatches(configFiles, batchSize);
+      const batches = createBatches(configFiles, batchSize);
       
       for (const batch of batches) {
         const batchResult = await this.processBatch(batch, stats);
@@ -184,84 +170,6 @@ export class ProjectDiscoveryService {
     }
   }
 
-  /**
-   * Recursively find all .killall.yaml files in a directory
-   */
-  private async findConfigFiles(
-    dirPath: string,
-    maxDepth: number,
-    excludePatterns: string[]
-  ): Promise<Result<string[]>> {
-    const configFiles: string[] = [];
-
-    try {
-      await this.scanDirectory(dirPath, configFiles, maxDepth, 0, excludePatterns);
-      return { ok: true, value: configFiles };
-    } catch (error) {
-      return {
-        ok: false,
-        error: error instanceof Error ? error : new Error('Directory scan failed')
-      };
-    }
-  }
-
-  /**
-   * Recursively scan directory for config files
-   */
-  private async scanDirectory(
-    dirPath: string,
-    configFiles: string[],
-    maxDepth: number,
-    currentDepth: number,
-    excludePatterns: string[]
-  ): Promise<void> {
-    if (currentDepth > maxDepth) {
-      return;
-    }
-
-    try {
-      const entries = await fs.readdir(dirPath, { withFileTypes: true });
-
-      for (const entry of entries) {
-        const fullPath = path.join(dirPath, entry.name);
-
-        // Check exclusion patterns
-        if (excludePatterns.some(pattern => entry.name.includes(pattern))) {
-          continue;
-        }
-
-        // Check if entry has isFile/isDirectory methods or if it's an object with type property
-        const isFile = typeof entry.isFile === 'function' ? entry.isFile() : false;
-        const isDirectory = typeof entry.isDirectory === 'function' ? entry.isDirectory() : false;
-
-        if (isFile && entry.name === '.killall.yaml') {
-          configFiles.push(fullPath);
-        } else if (isDirectory) {
-          await this.scanDirectory(
-            fullPath,
-            configFiles,
-            maxDepth,
-            currentDepth + 1,
-            excludePatterns
-          );
-        }
-      }
-    } catch (error) {
-      // Skip directories we can't read (permissions, etc.)
-      // This is normal for system directories
-    }
-  }
-
-  /**
-   * Create batches of items for processing
-   */
-  private createBatches<T>(items: T[], batchSize: number): T[][] {
-    const batches: T[][] = [];
-    for (let i = 0; i < items.length; i += batchSize) {
-      batches.push(items.slice(i, i + batchSize));
-    }
-    return batches;
-  }
 
   /**
    * Process a batch of config files
@@ -302,7 +210,7 @@ export class ProjectDiscoveryService {
         return;
       }
 
-      const projectPath = path.dirname(configFile);
+      const projectPath = getProjectPath(configFile);
       const config = configResult.value;
 
       // Check if project already exists
@@ -322,7 +230,7 @@ export class ProjectDiscoveryService {
       if (existingResult.value) {
         // Update existing project
         const existing = existingResult.value;
-        const newDestroyAt = this.calculateDestroyTime(config.timeout, now);
+        const newDestroyAt = calculateDestroyTime(config.timeout, now);
         
         const updateResult = await this.projectRepository.update(existing.id, {
           name: config.name,
@@ -354,7 +262,7 @@ export class ProjectDiscoveryService {
         }
       } else {
         // Create new project
-        const destroyAt = this.calculateDestroyTime(config.timeout, now);
+        const destroyAt = calculateDestroyTime(config.timeout, now);
         
         const newProject: Omit<Project, 'id' | 'createdAt' | 'updatedAt'> = {
           path: projectPath,
@@ -400,18 +308,6 @@ export class ProjectDiscoveryService {
     }
   }
 
-  /**
-   * Calculate destroy time based on timeout string
-   */
-  private calculateDestroyTime(timeout: string, baseTime: Date): Date {
-    const durationResult = parseDuration(timeout);
-    if (durationResult.ok) {
-      return new Date(baseTime.getTime() + durationResult.value);
-    }
-    
-    // Fallback to 2 hours if parsing fails
-    return new Date(baseTime.getTime() + 2 * 60 * 60 * 1000);
-  }
 
   /**
    * Clean up projects that no longer have config files
@@ -424,7 +320,7 @@ export class ProjectDiscoveryService {
         return activeResult;
       }
 
-      const foundPaths = new Set(foundConfigFiles.map(f => path.dirname(f)));
+      const foundPaths = createProjectPathsSet(foundConfigFiles);
       
       for (const project of activeResult.value) {
         if (!foundPaths.has(project.path)) {
@@ -468,9 +364,8 @@ export class ProjectDiscoveryService {
       const configFile = path.join(projectPath, '.killall.yaml');
       
       // Check if config file exists
-      try {
-        await fs.access(configFile, fsConstants.R_OK);
-      } catch {
+      const configExists = await projectConfigExists(projectPath);
+      if (!configExists) {
         return { ok: true, value: null }; // No config file found
       }
 
@@ -482,7 +377,7 @@ export class ProjectDiscoveryService {
 
       const config = configResult.value;
       const now = new Date();
-      const destroyAt = this.calculateDestroyTime(config.timeout, now);
+      const destroyAt = calculateDestroyTime(config.timeout, now);
 
       // Check if project exists
       const existingResult = await this.projectRepository.findByPath(projectPath);
