@@ -41,3 +41,8 @@ coverage/
 # Keep .github directory and its contents
 !.github/
 !.github/**
+# Coverage reports
+coverage/
+
+# Serena files
+.serena/

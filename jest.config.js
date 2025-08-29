@@ -6,7 +6,16 @@ module.exports = {
   
   // TypeScript support
   transform: {
-    '^.+\\.tsx?$': 'ts-jest',
+    '^.+\\.tsx?$': ['ts-jest', {
+      tsconfig: {
+        target: 'es2020',
+        module: 'commonjs',
+        strict: true,
+        esModuleInterop: true,
+        skipLibCheck: true,
+        forceConsistentCasingInFileNames: true,
+      },
+    }],
   },
   
   // File matching
@@ -17,7 +26,7 @@ module.exports = {
   
   // Module resolution
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  moduleNameMapping: {
+  moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@shared/(.*)$': '<rootDir>/src/shared/$1',
     '^@mocks/(.*)$': '<rootDir>/src/shared/mocks/$1',
@@ -80,30 +89,12 @@ module.exports = {
   // Error handling
   errorOnDeprecated: true,
   
-  // Mock configuration
-  mockPathIgnorePatterns: [
-    '<rootDir>/node_modules/',
-    '<rootDir>/src/shared/fixtures/',
-  ],
   
   // Transform ignore patterns for node_modules
   transformIgnorePatterns: [
     'node_modules/(?!(.*\\.mjs$))',
   ],
   
-  // Globals for TypeScript
-  globals: {
-    'ts-jest': {
-      tsconfig: {
-        target: 'es2020',
-        module: 'commonjs',
-        strict: true,
-        esModuleInterop: true,
-        skipLibCheck: true,
-        forceConsistentCasingInFileNames: true,
-      },
-    },
-  },
   
   // Watch configuration
   watchPlugins: [
