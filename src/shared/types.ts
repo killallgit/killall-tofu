@@ -239,30 +239,60 @@ export type EventType =
   | ExecutionCompletedEvent;
 
 // Error types for better error handling
-export class ValidationError extends Error {
-  constructor(message: string, public field?: string) {
-    super(message);
-    this.name = 'ValidationError';
-  }
+export interface ValidationError extends Error {
+  name: 'ValidationError';
+  field?: string;
 }
 
-export class NotFoundError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'NotFoundError';
-  }
+export interface NotFoundError extends Error {
+  name: 'NotFoundError';
 }
 
-export class ConfigurationError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ConfigurationError';
-  }
+export interface ConfigurationError extends Error {
+  name: 'ConfigurationError';
 }
 
-export class ExecutionError extends Error {
-  constructor(message: string, public exitCode?: number) {
-    super(message);
-    this.name = 'ExecutionError';
-  }
+export interface ExecutionError extends Error {
+  name: 'ExecutionError';
+  exitCode?: number;
 }
+
+// Error factory functions
+export const createValidationError = (message: string, field?: string): ValidationError => {
+  const error = new Error(message) as ValidationError;
+  error.name = 'ValidationError';
+  error.field = field;
+  return error;
+};
+
+export const createNotFoundError = (message: string): NotFoundError => {
+  const error = new Error(message) as NotFoundError;
+  error.name = 'NotFoundError';
+  return error;
+};
+
+export const createConfigurationError = (message: string): ConfigurationError => {
+  const error = new Error(message) as ConfigurationError;
+  error.name = 'ConfigurationError';
+  return error;
+};
+
+export const createExecutionError = (message: string, exitCode?: number): ExecutionError => {
+  const error = new Error(message) as ExecutionError;
+  error.name = 'ExecutionError';
+  error.exitCode = exitCode;
+  return error;
+};
+
+// Type guards for error checking
+export const isValidationError = (error: unknown): error is ValidationError =>
+  error instanceof Error && error.name === 'ValidationError';
+
+export const isNotFoundError = (error: unknown): error is NotFoundError =>
+  error instanceof Error && error.name === 'NotFoundError';
+
+export const isConfigurationError = (error: unknown): error is ConfigurationError =>
+  error instanceof Error && error.name === 'ConfigurationError';
+
+export const isExecutionError = (error: unknown): error is ExecutionError =>
+  error instanceof Error && error.name === 'ExecutionError';

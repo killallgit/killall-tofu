@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Functional Programming Compliance**: Major refactoring to align with CLAUDE.md standards
+  - Removed global variables from main Electron process (tray, mainWindow)
+  - Replaced all `let` variables with `const` in production code
+  - Converted error classes to factory functions with type guards
+  - Fixed mutable state in debounce/throttle utilities using object wrappers
+  - Refactored parseDuration to avoid mutable accumulator pattern
+
+### Added
+- **IPC Security Bridge**: Implemented secure preload script with contextBridge
+  - Complete IPC API for projects, config, notifications, and app operations
+  - Type-safe communication between main and renderer processes
+  - Restricted file operations with validation
+  - Event subscription/unsubscription patterns for notifications
+- **Winston Logger Configuration**: Production-ready logging to replace console.log
+  - Structured logging with multiple transports (console, file)
+  - Service-specific loggers for better debugging
+  - Timed operation helpers for performance monitoring
+  - Automatic log rotation with size limits
+  - Exception and rejection handlers
+
+### Changed
+- **Main Process Architecture**: Refactored to functional programming paradigm
+  - Replaced global state with closure-based state management
+  - Implemented factory functions for window and tray creation
+  - Added proper IPC handler setup with security validation
+  - Improved code organization with pure functions
+
+### Technical
+- **Test Infrastructure Updates**: Fixed test compatibility with new error factories
+  - Updated validation tests to use createValidationError factory
+  - Added type guards for error checking instead of instanceof
+  - Fixed ConfigValidationError usage in test assertions
+  - Resolved TypeScript errors from class-to-interface conversion
+
 ### Research
 - **ORM Evaluation** (Issue #8) - Comprehensive analysis of TypeScript ORM options
   - Evaluated Drizzle, Prisma, Kysely, TypeORM, and MikroORM for SQLite/Electron compatibility

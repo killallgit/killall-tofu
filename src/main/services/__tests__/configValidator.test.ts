@@ -7,7 +7,11 @@ const path = jest.requireActual('path') as typeof import('path');
 // Use actual os module, not the mock  
 const os = jest.requireActual('os') as typeof import('os');
 
-import { parseDuration, validatePath, validateConfig, parseConfigFile, ConfigValidationError } from '../configValidator';
+import { parseDuration, validatePath, validateConfig, parseConfigFile, ConfigValidationError, createConfigValidationError } from '../configValidator';
+
+// Helper to check if error is ConfigValidationError
+const isConfigValidationError = (error: unknown): error is ConfigValidationError =>
+  error instanceof Error && error.name === 'ConfigValidationError';
 
 describe('parseDuration', () => {
   it('should parse valid duration strings correctly', () => {
@@ -50,7 +54,7 @@ describe('parseDuration', () => {
       const result = parseDuration(input);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBeInstanceOf(ConfigValidationError);
+        expect(isConfigValidationError(result.error)).toBe(true);
       }
     });
   });
@@ -104,7 +108,7 @@ describe('validatePath', () => {
       const result = validatePath(testPath, basePath);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBeInstanceOf(ConfigValidationError);
+        expect(isConfigValidationError(result.error)).toBe(true);
         expect(result.error.message).toContain('Path traversal detected');
       }
     });
@@ -222,7 +226,7 @@ describe('validateConfig', () => {
       const result = await validateConfig(config, testProjectPath);
       expect(result.ok).toBe(false);
       if (!result.ok) {
-        expect(result.error).toBeInstanceOf(ConfigValidationError);
+        expect(isConfigValidationError(result.error)).toBe(true);
       }
     }
   });
@@ -364,7 +368,7 @@ invalid_yaml: [unclosed array
     const result = await parseConfigFile(configPath);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBeInstanceOf(ConfigValidationError);
+      expect(isConfigValidationError(result.error)).toBe(true);
       expect(result.error.message).toContain('YAML parsing failed');
     }
   });
@@ -380,7 +384,7 @@ invalid_yaml: [unclosed array
     const result = await parseConfigFile(nonExistentPath);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBeInstanceOf(ConfigValidationError);
+      expect(isConfigValidationError(result.error)).toBe(true);
       expect(result.error.message).toContain('Failed to read configuration file');
     }
   });
@@ -397,7 +401,7 @@ timeout: "invalid duration"
     const result = await parseConfigFile(configPath);
     expect(result.ok).toBe(false);
     if (!result.ok) {
-      expect(result.error).toBeInstanceOf(ConfigValidationError);
+      expect(isConfigValidationError(result.error)).toBe(true);
     }
   });
 });

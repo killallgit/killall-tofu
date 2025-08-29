@@ -2,10 +2,10 @@
  * Schema validation utilities for configuration and data validation.
  */
 
-import { Result, ValidationError, ProjectConfig, ExecutionConfig, HookConfig } from '../types';
+import { Result, ValidationError, ProjectConfig, ExecutionConfig, HookConfig, createValidationError } from '../types';
 
-// Re-export type and constructor for convenience
-export { ValidationError } from '../types';
+// Re-export type and factory function for convenience
+export { ValidationError, createValidationError, isValidationError } from '../types';
 
 import { Ok, Err } from './result';
 import { parseDuration } from './duration';
@@ -17,7 +17,7 @@ export type ValidationRule<T> = (value: T) => Result<void, ValidationError>;
 export const required = <T>(fieldName: string): ValidationRule<T | null | undefined> =>
   (value: T | null | undefined): Result<void, ValidationError> => {
     if (value == null) {
-      return Err(new ValidationError(`${fieldName} is required`, fieldName));
+      return Err(createValidationError(`${fieldName} is required`, fieldName));
     }
     return Ok(void 0);
   };
@@ -25,7 +25,7 @@ export const required = <T>(fieldName: string): ValidationRule<T | null | undefi
 export const isString = (fieldName: string): ValidationRule<unknown> =>
   (value: unknown): Result<void, ValidationError> => {
     if (typeof value !== 'string') {
-      return Err(new ValidationError(`${fieldName} must be a string`, fieldName));
+      return Err(createValidationError(`${fieldName} must be a string`, fieldName));
     }
     return Ok(void 0);
   };
@@ -33,7 +33,7 @@ export const isString = (fieldName: string): ValidationRule<unknown> =>
 export const isNumber = (fieldName: string): ValidationRule<unknown> =>
   (value: unknown): Result<void, ValidationError> => {
     if (typeof value !== 'number' || isNaN(value)) {
-      return Err(new ValidationError(`${fieldName} must be a number`, fieldName));
+      return Err(createValidationError(`${fieldName} must be a number`, fieldName));
     }
     return Ok(void 0);
   };
@@ -41,7 +41,7 @@ export const isNumber = (fieldName: string): ValidationRule<unknown> =>
 export const isBoolean = (fieldName: string): ValidationRule<unknown> =>
   (value: unknown): Result<void, ValidationError> => {
     if (typeof value !== 'boolean') {
-      return Err(new ValidationError(`${fieldName} must be a boolean`, fieldName));
+      return Err(createValidationError(`${fieldName} must be a boolean`, fieldName));
     }
     return Ok(void 0);
   };
@@ -49,7 +49,7 @@ export const isBoolean = (fieldName: string): ValidationRule<unknown> =>
 export const isArray = (fieldName: string): ValidationRule<unknown> =>
   (value: unknown): Result<void, ValidationError> => {
     if (!Array.isArray(value)) {
-      return Err(new ValidationError(`${fieldName} must be an array`, fieldName));
+      return Err(createValidationError(`${fieldName} must be an array`, fieldName));
     }
     return Ok(void 0);
   };
@@ -57,7 +57,7 @@ export const isArray = (fieldName: string): ValidationRule<unknown> =>
 export const isObject = (fieldName: string): ValidationRule<unknown> =>
   (value: unknown): Result<void, ValidationError> => {
     if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      return Err(new ValidationError(`${fieldName} must be an object`, fieldName));
+      return Err(createValidationError(`${fieldName} must be an object`, fieldName));
     }
     return Ok(void 0);
   };
@@ -65,7 +65,7 @@ export const isObject = (fieldName: string): ValidationRule<unknown> =>
 export const minLength = (min: number, fieldName: string): ValidationRule<string> =>
   (value: string): Result<void, ValidationError> => {
     if (value.length < min) {
-      return Err(new ValidationError(`${fieldName} must be at least ${min} characters`, fieldName));
+      return Err(createValidationError(`${fieldName} must be at least ${min} characters`, fieldName));
     }
     return Ok(void 0);
   };
@@ -73,7 +73,7 @@ export const minLength = (min: number, fieldName: string): ValidationRule<string
 export const maxLength = (max: number, fieldName: string): ValidationRule<string> =>
   (value: string): Result<void, ValidationError> => {
     if (value.length > max) {
-      return Err(new ValidationError(`${fieldName} must be at most ${max} characters`, fieldName));
+      return Err(createValidationError(`${fieldName} must be at most ${max} characters`, fieldName));
     }
     return Ok(void 0);
   };
@@ -81,7 +81,7 @@ export const maxLength = (max: number, fieldName: string): ValidationRule<string
 export const minValue = (min: number, fieldName: string): ValidationRule<number> =>
   (value: number): Result<void, ValidationError> => {
     if (value < min) {
-      return Err(new ValidationError(`${fieldName} must be at least ${min}`, fieldName));
+      return Err(createValidationError(`${fieldName} must be at least ${min}`, fieldName));
     }
     return Ok(void 0);
   };
@@ -89,7 +89,7 @@ export const minValue = (min: number, fieldName: string): ValidationRule<number>
 export const maxValue = (max: number, fieldName: string): ValidationRule<number> =>
   (value: number): Result<void, ValidationError> => {
     if (value > max) {
-      return Err(new ValidationError(`${fieldName} must be at most ${max}`, fieldName));
+      return Err(createValidationError(`${fieldName} must be at most ${max}`, fieldName));
     }
     return Ok(void 0);
   };
@@ -97,7 +97,7 @@ export const maxValue = (max: number, fieldName: string): ValidationRule<number>
 export const oneOf = <T>(values: T[], fieldName: string): ValidationRule<T> =>
   (value: T): Result<void, ValidationError> => {
     if (!values.includes(value)) {
-      return Err(new ValidationError(`${fieldName} must be one of: ${values.join(', ')}`, fieldName));
+      return Err(createValidationError(`${fieldName} must be one of: ${values.join(', ')}`, fieldName));
     }
     return Ok(void 0);
   };
@@ -105,7 +105,7 @@ export const oneOf = <T>(values: T[], fieldName: string): ValidationRule<T> =>
 export const matches = (pattern: RegExp, fieldName: string): ValidationRule<string> =>
   (value: string): Result<void, ValidationError> => {
     if (!pattern.test(value)) {
-      return Err(new ValidationError(`${fieldName} has invalid format`, fieldName));
+      return Err(createValidationError(`${fieldName} has invalid format`, fieldName));
     }
     return Ok(void 0);
   };
@@ -138,7 +138,7 @@ export const validateArray = <T>(
     for (let i = 0; i < array.length; i++) {
       const result = itemRule(array[i]);
       if (!result.ok) {
-        return Err(new ValidationError(`${fieldName}[${i}]: ${result.error.message}`, fieldName));
+        return Err(createValidationError(`${fieldName}[${i}]: ${result.error.message}`, fieldName));
       }
     }
     return Ok(void 0);
@@ -149,7 +149,7 @@ export const isDuration = (fieldName: string): ValidationRule<string> =>
   (value: string): Result<void, ValidationError> => {
     const result = parseDuration(value);
     if (!result.ok) {
-      return Err(new ValidationError(`${fieldName} is not a valid duration: ${result.error.message}`, fieldName));
+      return Err(createValidationError(`${fieldName} is not a valid duration: ${result.error.message}`, fieldName));
     }
     return Ok(void 0);
   };
@@ -158,7 +158,7 @@ export const isValidPath = (fieldName: string): ValidationRule<string> =>
   (value: string): Result<void, ValidationError> => {
     const result = validatePath(value);
     if (!result.ok) {
-      return Err(new ValidationError(`${fieldName} is not a valid path: ${result.error.message}`, fieldName));
+      return Err(createValidationError(`${fieldName} is not a valid path: ${result.error.message}`, fieldName));
     }
     return Ok(void 0);
   };
@@ -269,7 +269,7 @@ export const validateExecutionConfig = (config: unknown): Result<ExecutionConfig
     const envObj = obj.environment as Record<string, unknown>;
     for (const [key, value] of Object.entries(envObj)) {
       if (typeof value !== 'string') {
-        return Err(new ValidationError(`environment.${key} must be a string`, 'environment'));
+        return Err(createValidationError(`environment.${key} must be a string`, 'environment'));
       }
     }
   }

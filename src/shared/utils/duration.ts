@@ -122,32 +122,33 @@ export const parseDuration = (input: string): Result<Duration, Error> => {
 
   // Parse complex duration expressions
   const regex = /(\d+(?:\.\d+)?)\s*([a-z]+)/g;
-  let totalMs = 0;
-  let match;
-  let hasMatch = false;
-
-  while ((match = regex.exec(trimmed)) !== null) {
-    hasMatch = true;
-    const [, numberStr, unitStr] = match;
-    const number = parseFloat(numberStr);
-    
-    if (isNaN(number) || number < 0) {
-      return Err(new Error(`Invalid number: ${numberStr}`));
-    }
-
-    const unit = unitStr as TimeUnit;
-    if (!(unit in TIME_UNITS)) {
-      return Err(new Error(`Unknown time unit: ${unit}`));
-    }
-
-    totalMs += number * TIME_UNITS[unit];
-  }
-
-  if (!hasMatch) {
+  const matches = Array.from(trimmed.matchAll(regex));
+  
+  if (matches.length === 0) {
     return Err(new Error(`Invalid duration format: ${input}`));
   }
 
-  return Ok(new DurationImpl(totalMs));
+  try {
+    const totalMs = matches.reduce((acc, match) => {
+      const [, numberStr, unitStr] = match;
+      const number = parseFloat(numberStr);
+      
+      if (isNaN(number) || number < 0) {
+        throw new Error(`Invalid number: ${numberStr}`);
+      }
+
+      const unit = unitStr as TimeUnit;
+      if (!(unit in TIME_UNITS)) {
+        throw new Error(`Unknown time unit: ${unit}`);
+      }
+
+      return acc + number * TIME_UNITS[unit];
+    }, 0);
+
+    return Ok(new DurationImpl(totalMs));
+  } catch (error) {
+    return Err(error as Error);
+  }
 };
 
 // Format milliseconds back to human-readable string
