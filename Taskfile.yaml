@@ -1,6 +1,12 @@
 version: '3'
 
 tasks:
+  start:
+    desc: Clean database and start fresh development server
+    cmds:
+      - task: clean
+      - npm run start
+
   dev:
     desc: Start local development server
     cmds:
@@ -27,3 +33,23 @@ tasks:
       - task: lint
       - task: typecheck
       - task: test
+
+  cli:
+    desc: Run the CLI tool with arguments
+    cmds:
+      - npm run cli:run -- {{.CLI_ARGS}}
+
+  cli:build:
+    desc: Build the CLI tool
+    cmds:
+      - npm run cli:build
+
+  cli:init:
+    desc: Initialize a killall-tofu project in the current directory
+    cmds:
+      - npm run cli:run -- init {{.CLI_ARGS}}
+
+  clean:
+    desc: Clean the ~/.killall directory (removes database and all data)
+    cmds:
+      - node scripts/clean-database.js

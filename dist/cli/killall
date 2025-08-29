@@ -1,0 +1,42 @@
+#!/usr/bin/env node
+
+// This is the killall CLI bundled with the Electron app
+// It uses the Electron app's database and configuration
+
+const path = require('path');
+const { spawn } = require('child_process');
+
+// Find ts-node - it should be in the app's node_modules
+const appResourcePath = path.dirname(__dirname);
+const tsNodePath = path.join(appResourcePath, 'node_modules', '.bin', 'ts-node');
+const cliEntryPoint = path.join(__dirname, 'src', 'index.ts');
+
+// Check if we're in development or production
+const isDev = !__dirname.includes('app.asar');
+
+if (isDev || !require('fs').existsSync(tsNodePath)) {
+  // Fallback to using regular node with require hooks
+  require('ts-node').register({
+    transpileOnly: true,
+    compilerOptions: {
+      module: 'commonjs',
+      target: 'es2020',
+      esModuleInterop: true,
+      skipLibCheck: true
+    }
+  });
+  require(cliEntryPoint);
+} else {
+  // Use ts-node from the bundled app
+  const child = spawn(tsNodePath, [cliEntryPoint, ...process.argv.slice(2)], {
+    stdio: 'inherit',
+    env: {
+      ...process.env,
+      TS_NODE_TRANSPILE_ONLY: 'true'
+    }
+  });
+  
+  child.on('exit', (code) => {
+    process.exit(code || 0);
+  });
+}
