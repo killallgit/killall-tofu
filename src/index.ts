@@ -37,9 +37,23 @@ const createTray = (): void => {
     },
     { type: 'separator' },
     { 
+      label: 'Dashboard', 
+      type: 'normal',
+      click: (): void => {
+        if (mainWindow) {
+          mainWindow.show();
+          mainWindow.focus();
+        } else {
+          createWindow();
+        }
+      }
+    },
+    { 
       label: 'Settings', 
       type: 'normal',
       click: (): void => {
+        // TODO: In the future, this should open a separate settings window
+        // For now, it opens the main dashboard window which includes settings
         if (mainWindow) {
           mainWindow.show();
           mainWindow.focus();
@@ -60,13 +74,9 @@ const createTray = (): void => {
   
   tray.setContextMenu(contextMenu);
   
-  // Handle tray clicks
+  // Handle tray clicks - show context menu instead of auto-opening window
   tray.on('click', () => {
-    if (mainWindow?.isVisible()) {
-      mainWindow.hide();
-    } else {
-      createWindow();
-    }
+    tray?.popUpContextMenu();
   });
 };
 
