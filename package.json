@@ -18,7 +18,11 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:push": "drizzle-kit push"
+    "db:push": "drizzle-kit push",
+    "benchmark": "ts-node scripts/benchmark-drizzle.ts",
+    "benchmark:memory": "node --expose-gc -r ts-node/register scripts/memory-test.ts",
+    "benchmark:bundle": "ts-node scripts/bundle-size-analysis.ts",
+    "benchmark:all": "npm run benchmark && npm run benchmark:memory && npm run benchmark:bundle"
   },
   "keywords": [],
   "author": {
@@ -62,6 +66,7 @@
     "style-loader": "^3.3.4",
     "ts-jest": "^29.4.1",
     "ts-loader": "^9.5.4",
+    "ts-node": "^10.9.2",
     "typescript": "^5.9.2"
   },
   "dependencies": {
